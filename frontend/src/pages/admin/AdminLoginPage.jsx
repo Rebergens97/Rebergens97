@@ -132,22 +132,23 @@ export default function AdminLoginPage() {
           </p>
         </CardHeader>
         <CardContent className="pt-6">
-          {/* Dev Debug Panel */}
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-center gap-2 text-amber-700 text-xs font-medium mb-2">
-              <Bug className="w-4 h-4" />
-              DEV DEBUG MODE
-            </div>
-            <p className="text-xs text-amber-600 mb-2">
-              API: <code className="bg-amber-100 px-1 rounded">{API_URL}</code>
-            </p>
-            <Button
-              type="button"
-              onClick={handleResetOwner}
-              disabled={resetting}
-              variant="outline"
-              size="sm"
-              className="w-full text-amber-700 border-amber-300 hover:bg-amber-100"
+          {/* Dev Debug Panel - Only show in dev mode */}
+          {devMode && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 text-amber-700 text-xs font-medium mb-2">
+                <Bug className="w-4 h-4" />
+                DEV DEBUG MODE
+              </div>
+              <p className="text-xs text-amber-600 mb-2">
+                API: <code className="bg-amber-100 px-1 rounded">{API_URL}</code>
+              </p>
+              <Button
+                type="button"
+                onClick={handleResetOwner}
+                disabled={resetting}
+                variant="outline"
+                size="sm"
+                className="w-full text-amber-700 border-amber-300 hover:bg-amber-100"
               data-testid="reset-owner-btn"
             >
               {resetting ? (
