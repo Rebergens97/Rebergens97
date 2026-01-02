@@ -9,7 +9,7 @@ import { Switch } from '../../components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Loader2, Target } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, Target, Star, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -30,8 +30,10 @@ export default function AdminCampaignsPage() {
     body_fr: '',
     goal_amount: 0,
     active: true,
+    featured: false,
     cover_image: '',
-    amount_cards: []
+    amount_cards: [],
+    sort_order: 0
   });
 
   useEffect(() => {
@@ -63,11 +65,14 @@ export default function AdminCampaignsPage() {
         body_fr: campaign.body_fr,
         goal_amount: campaign.goal_amount,
         active: campaign.active,
+        featured: campaign.featured || false,
         cover_image: campaign.cover_image,
-        amount_cards: campaign.amount_cards || []
+        amount_cards: campaign.amount_cards || [],
+        sort_order: campaign.sort_order || 0
       });
     } else {
       setEditingCampaign(null);
+      const maxOrder = campaigns.length > 0 ? Math.max(...campaigns.map(c => c.sort_order || 0)) : -1;
       setFormData({
         slug: '',
         title_en: '',
@@ -78,6 +83,7 @@ export default function AdminCampaignsPage() {
         body_fr: '',
         goal_amount: 0,
         active: true,
+        featured: false,
         cover_image: '',
         amount_cards: [
           { amount: 25, impact_en: '', impact_fr: '' },
@@ -85,7 +91,8 @@ export default function AdminCampaignsPage() {
           { amount: 100, impact_en: '', impact_fr: '' },
           { amount: 250, impact_en: '', impact_fr: '' },
           { amount: 500, impact_en: '', impact_fr: '' }
-        ]
+        ],
+        sort_order: maxOrder + 1
       });
     }
     setDialogOpen(true);
@@ -126,9 +133,41 @@ export default function AdminCampaignsPage() {
     }
   };
 
+  const handleReorder = async (index, direction) => {
+    const newCampaigns = [...campaigns];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    if (targetIndex < 0 || targetIndex >= newCampaigns.length) return;
+    
+    [newCampaigns[index], newCampaigns[targetIndex]] = [newCampaigns[targetIndex], newCampaigns[index]];
+    
+    const campaignIds = newCampaigns.map(c => c.id);
+    
+    try {
+      await axios.put(`${API}/admin/campaigns/reorder`, campaignIds);
+      setCampaigns(newCampaigns);
+      toast.success('Order updated');
+    } catch (error) {
+      console.error('Failed to reorder:', error);
+      toast.error('Failed to reorder');
+    }
+  };
+
   const updateAmountCard = (index, field, value) => {
     const newCards = [...formData.amount_cards];
-    newCards[index] = { ...newCards[index], [field]: value };
+    newCards[index] = { ...newCards[index], [field]: field === 'amount' ? parseInt(value) || 0 : value };
+    setFormData({ ...formData, amount_cards: newCards });
+  };
+
+  const addAmountCard = () => {
+    setFormData({
+      ...formData,
+      amount_cards: [...formData.amount_cards, { amount: 0, impact_en: '', impact_fr: '' }]
+    });
+  };
+
+  const removeAmountCard = (index) => {
+    const newCards = formData.amount_cards.filter((_, i) => i !== index);
     setFormData({ ...formData, amount_cards: newCards });
   };
 
@@ -151,14 +190,14 @@ export default function AdminCampaignsPage() {
                 Add Campaign
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-display text-xl">
                   {editingCampaign ? 'Edit Campaign' : 'New Campaign'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label>Slug</Label>
                     <Input
@@ -175,6 +214,15 @@ export default function AdminCampaignsPage() {
                       type="number"
                       value={formData.goal_amount}
                       onChange={(e) => setFormData({ ...formData, goal_amount: parseFloat(e.target.value) || 0 })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Sort Order</Label>
+                    <Input
+                      type="number"
+                      value={formData.sort_order}
+                      onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
                       className="mt-1"
                     />
                   </div>
@@ -257,22 +305,56 @@ export default function AdminCampaignsPage() {
                   />
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={formData.active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
-                  />
-                  <Label>Active</Label>
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={formData.active}
+                      onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
+                    />
+                    <Label>Active</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={formData.featured}
+                      onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
+                    />
+                    <Label className="flex items-center">
+                      <Star className="w-4 h-4 mr-1 text-yellow-500" />
+                      Featured
+                    </Label>
+                  </div>
                 </div>
 
                 {/* Amount Cards */}
                 <div>
-                  <Label className="text-lg font-semibold">Donation Amount Cards</Label>
-                  <div className="mt-3 space-y-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-lg font-semibold">Donation Amount Cards</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addAmountCard}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Amount
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
                     {formData.amount_cards.map((card, index) => (
                       <div key={index} className="p-4 bg-slate-50 rounded-xl">
                         <div className="flex items-center justify-between mb-3">
-                          <span className="font-bold text-teal-600">${card.amount}</span>
+                          <div className="flex items-center space-x-2">
+                            <Label className="text-sm">Amount ($)</Label>
+                            <Input
+                              type="number"
+                              value={card.amount}
+                              onChange={(e) => updateAmountCard(index, 'amount', e.target.value)}
+                              className="w-24 h-8"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAmountCard(index)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
@@ -325,35 +407,65 @@ export default function AdminCampaignsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6">
-            {campaigns.map((campaign) => (
+          <div className="space-y-4">
+            {campaigns.map((campaign, index) => (
               <Card key={campaign.id} className="border-0 shadow-md overflow-hidden">
                 <div className="flex">
+                  {/* Reorder Controls */}
+                  <div className="flex flex-col justify-center px-2 bg-slate-50 border-r">
+                    <button
+                      onClick={() => handleReorder(index, 'up')}
+                      disabled={index === 0}
+                      className="p-1 hover:bg-slate-200 rounded disabled:opacity-30"
+                    >
+                      <ArrowUp className="w-4 h-4" />
+                    </button>
+                    <GripVertical className="w-4 h-4 text-slate-400 mx-auto my-1" />
+                    <button
+                      onClick={() => handleReorder(index, 'down')}
+                      disabled={index === campaigns.length - 1}
+                      className="p-1 hover:bg-slate-200 rounded disabled:opacity-30"
+                    >
+                      <ArrowDown className="w-4 h-4" />
+                    </button>
+                  </div>
+
                   {campaign.cover_image && (
                     <img 
                       src={campaign.cover_image} 
                       alt={campaign.title_en}
-                      className="w-48 h-32 object-cover hidden sm:block"
+                      className="w-40 h-28 object-cover hidden sm:block"
                     />
                   )}
-                  <CardContent className="flex-1 p-6">
+                  <CardContent className="flex-1 p-4">
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="flex items-center space-x-2">
-                          <h3 className="font-display text-xl font-semibold text-navy">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="font-display text-lg font-semibold text-navy">
                             {campaign.title_en}
                           </h3>
+                          {campaign.featured && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 flex items-center">
+                              <Star className="w-3 h-3 mr-1" />
+                              Featured
+                            </span>
+                          )}
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                             campaign.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
                           }`}>
                             {campaign.active ? 'Active' : 'Inactive'}
                           </span>
                         </div>
-                        <p className="text-slate-500 text-sm mt-1">{campaign.title_fr}</p>
-                        <p className="text-slate-600 text-sm mt-2 line-clamp-2">{campaign.summary_en}</p>
-                        <p className="text-teal-600 font-mono font-bold mt-2">
-                          Goal: ${campaign.goal_amount?.toLocaleString()}
-                        </p>
+                        <p className="text-slate-400 text-sm">{campaign.title_fr}</p>
+                        <p className="text-slate-600 text-sm mt-1 line-clamp-1">{campaign.summary_en}</p>
+                        <div className="flex items-center space-x-4 mt-2">
+                          <span className="text-teal-600 font-mono text-sm font-bold">
+                            Goal: ${campaign.goal_amount?.toLocaleString()}
+                          </span>
+                          <span className="text-slate-400 text-xs">
+                            {campaign.amount_cards?.length || 0} donation tiers
+                          </span>
+                        </div>
                       </div>
                       <div className="flex space-x-2">
                         <Button 
