@@ -318,6 +318,14 @@ def deserialize_datetime(doc: dict, fields: List[str]) -> dict:
 async def root():
     return {"message": "DrepanHope Foundation API", "status": "running"}
 
+@api_router.get("/config")
+async def get_config():
+    """Return public configuration for the frontend."""
+    return {
+        "dev_mode": DEV_MODE,
+        "stripe_enabled": STRIPE_ENABLED
+    }
+
 @api_router.get("/campaigns", response_model=List[Campaign])
 async def get_campaigns(active_only: bool = True, featured_only: bool = False):
     query = {}
