@@ -121,6 +121,25 @@ export const translations = {
       readMore: "Read More"
     },
     
+    // Blog
+    blog: {
+      title: "Blog",
+      subtitle: "News, stories, and updates from DrepanHope Foundation",
+      searchPlaceholder: "Search articles...",
+      filterByTag: "Filter",
+      allPosts: "All",
+      noPosts: "No blog posts yet. Check back soon!",
+      readMore: "Read More",
+      backToBlog: "Back to Blog",
+      share: "Share",
+      linkCopied: "Link copied to clipboard!",
+      notFound: "Post not found",
+      relatedPosts: "Related Articles",
+      relatedCampaign: "Support This Campaign",
+      ctaTitle: "Make a Difference Today",
+      ctaSubtitle: "Your donation helps us continue our mission to fight sickle cell disease and support families in need."
+    },
+    
     // Footer
     footer: {
       tagline: "Based in the USA • Global mission • Transparent reporting",
