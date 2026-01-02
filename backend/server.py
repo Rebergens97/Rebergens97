@@ -960,8 +960,11 @@ async def admin_get_audit_logs(user: dict = Depends(require_roles([UserRole.OWNE
 async def dev_reset_owner():
     """
     Development-only endpoint to reset the owner password to a known temporary value.
-    WARNING: This endpoint should be disabled in production.
+    WARNING: This endpoint is disabled in production.
     """
+    if not DEV_MODE:
+        raise HTTPException(status_code=404, detail="Not found")
+    
     temp_password = "Temp@12345!"
     
     # Find the owner user
