@@ -349,6 +349,34 @@ async def get_updates(campaign_id: Optional[str] = None, published_only: bool = 
     updates = await db.updates.find(query, {"_id": 0}).sort("date", -1).to_list(100)
     return updates
 
+# ==================== BLOG/POSTS PUBLIC ROUTES ====================
+
+@api_router.get("/posts")
+async def get_posts(published_only: bool = True, tag: Optional[str] = None, limit: int = 20):
+    query = {}
+    if published_only:
+        query["published"] = True
+    if tag:
+        query["tags"] = tag
+    posts = await db.posts.find(query, {"_id": 0}).sort("published_at", -1).to_list(limit)
+    return posts
+
+@api_router.get("/posts/{slug}")
+async def get_post_by_slug(slug: str):
+    post = await db.posts.find_one({"slug": slug, "published": True}, {"_id": 0})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
+
+@api_router.get("/posts/tags/all")
+async def get_all_tags():
+    posts = await db.posts.find({"published": True}, {"tags": 1, "_id": 0}).to_list(1000)
+    tags = set()
+    for post in posts:
+        for tag in post.get("tags", []):
+            tags.add(tag)
+    return sorted(list(tags))
+
 @api_router.get("/transparency/summary")
 async def get_transparency_summary():
     total_raised = await db.donations.aggregate([
