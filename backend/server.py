@@ -340,6 +340,191 @@ async def get_campaign_by_slug(slug: str):
         raise HTTPException(status_code=404, detail="Campaign not found")
     return campaign
 
+# ==================== STRIPE CHECKOUT ====================
+
+class CheckoutRequest(BaseModel):
+    campaign_id: str
+    amount: float
+    currency: str = "usd"
+    interval: str = "one_time"  # one_time or monthly
+    donor_first_name: Optional[str] = None
+    donor_last_name: Optional[str] = None
+    donor_email: Optional[str] = None
+
+@api_router.post("/donations/checkout")
+async def create_checkout_session(data: CheckoutRequest, request: Request):
+    """
+    Create a Stripe Checkout session for donation.
+    If Stripe is not configured, falls back to mock mode.
+    """
+    # Get campaign to validate
+    campaign = await db.campaigns.find_one({"id": data.campaign_id}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    # Create donation record first (pending status)
+    donation_id = str(uuid.uuid4())
+    donation = {
+        "id": donation_id,
+        "donor_first_name": data.donor_first_name or "Anonymous",
+        "donor_last_name": data.donor_last_name or "",
+        "email": data.donor_email or "",
+        "campaign_id": data.campaign_id,
+        "amount": data.amount,
+        "currency": data.currency,
+        "donation_type": data.interval,
+        "status": "pending",
+        "stripe_session_id": None,
+        "stripe_payment_intent": None,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.donations.insert_one(donation)
+    
+    # If Stripe is not configured, return mock mode
+    if not STRIPE_ENABLED:
+        logger.info("Stripe not configured, using mock mode")
+        return {
+            "mode": "mock",
+            "donation_id": donation_id,
+            "message": "Stripe not configured. Donation saved as pending."
+        }
+    
+    try:
+        # Build URLs from request origin
+        host_url = str(request.base_url).rstrip('/')
+        frontend_url = os.environ.get('REACT_APP_BACKEND_URL', host_url).replace('/api', '')
+        success_url = f"{frontend_url}/thank-you?session_id={{CHECKOUT_SESSION_ID}}&donation_id={donation_id}"
+        cancel_url = f"{frontend_url}/donate"
+        webhook_url = f"{host_url}api/webhooks/stripe"
+        
+        # Initialize Stripe checkout
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        # Create checkout session
+        checkout_request = CheckoutSessionRequest(
+            amount=float(data.amount),
+            currency=data.currency,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "donation_id": donation_id,
+                "campaign_id": data.campaign_id,
+                "campaign_name": campaign.get("title_en", "Donation"),
+                "donor_email": data.donor_email or "",
+                "interval": data.interval
+            }
+        )
+        
+        session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Update donation with Stripe session ID
+        await db.donations.update_one(
+            {"id": donation_id},
+            {"$set": {"stripe_session_id": session.session_id}}
+        )
+        
+        # Create payment transaction record
+        await db.payment_transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "donation_id": donation_id,
+            "session_id": session.session_id,
+            "amount": data.amount,
+            "currency": data.currency,
+            "status": "initiated",
+            "payment_status": "pending",
+            "metadata": checkout_request.metadata,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        logger.info(f"Stripe checkout session created: {session.session_id}")
+        
+        return {
+            "mode": "stripe",
+            "checkoutUrl": session.url,
+            "sessionId": session.session_id,
+            "donationId": donation_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Stripe checkout error: {str(e)}")
+        # Fall back to mock mode on error
+        return {
+            "mode": "mock",
+            "donation_id": donation_id,
+            "error": str(e),
+            "message": "Stripe error. Donation saved as pending."
+        }
+
+@api_router.get("/donations/status/{session_id}")
+async def get_checkout_status(session_id: str):
+    """Get the status of a Stripe checkout session."""
+    if not STRIPE_ENABLED:
+        return {"status": "mock", "payment_status": "pending"}
+    
+    try:
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Update payment transaction and donation if paid
+        if status.payment_status == "paid":
+            donation_id = status.metadata.get("donation_id")
+            if donation_id:
+                await db.donations.update_one(
+                    {"id": donation_id},
+                    {"$set": {"status": "paid"}}
+                )
+                await db.payment_transactions.update_one(
+                    {"session_id": session_id},
+                    {"$set": {"status": "completed", "payment_status": "paid"}}
+                )
+        
+        return {
+            "status": status.status,
+            "payment_status": status.payment_status,
+            "amount_total": status.amount_total,
+            "currency": status.currency,
+            "metadata": status.metadata
+        }
+    except Exception as e:
+        logger.error(f"Checkout status error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events."""
+    if not STRIPE_ENABLED:
+        return {"status": "ignored", "reason": "Stripe not configured"}
+    
+    try:
+        body = await request.body()
+        signature = request.headers.get("Stripe-Signature")
+        
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        webhook_response = await stripe_checkout.handle_webhook(body, signature)
+        
+        logger.info(f"Stripe webhook received: {webhook_response.event_type}")
+        
+        # Handle checkout.session.completed
+        if webhook_response.event_type == "checkout.session.completed":
+            donation_id = webhook_response.metadata.get("donation_id")
+            if donation_id:
+                await db.donations.update_one(
+                    {"id": donation_id},
+                    {"$set": {"status": "paid"}}
+                )
+                await db.payment_transactions.update_one(
+                    {"session_id": webhook_response.session_id},
+                    {"$set": {"status": "completed", "payment_status": "paid"}}
+                )
+                logger.info(f"Donation {donation_id} marked as paid via webhook")
+        
+        return {"status": "success", "event_type": webhook_response.event_type}
+        
+    except Exception as e:
+        logger.error(f"Webhook error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Legacy donation endpoint (kept for backwards compatibility)
 @api_router.post("/donations", response_model=Donation)
 async def create_donation(donation_data: DonationCreate):
     donation = Donation(**donation_data.model_dump())
