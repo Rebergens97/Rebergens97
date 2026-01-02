@@ -5,7 +5,7 @@ import { Layout } from '../components/layout/Layout';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import axios from 'axios';
-import { Heart, Shield, Users, ArrowRight, Calendar, Stethoscope, Baby, CheckCircle } from 'lucide-react';
+import { Heart, Shield, Users, ArrowRight, Calendar, Stethoscope, Baby, CheckCircle, Syringe, AlertTriangle, Pill, BookOpen } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -37,8 +37,19 @@ export default function HomePage() {
   }, []);
 
   const getCampaignIcon = (slug) => {
-    return slug === 'sickle-cell' ? Stethoscope : Baby;
+    const icons = {
+      'sickle-cell': Stethoscope,
+      'pregnancy-testing': Baby,
+      'newborn-screening': Syringe,
+      'emergency-relief': AlertTriangle,
+      'medication-access': Pill,
+      'patient-education': BookOpen
+    };
+    return icons[slug] || Heart;
   };
+
+  const featuredCampaigns = campaigns.filter(c => c.featured);
+  const otherCampaigns = campaigns.filter(c => !c.featured);
 
   return (
     <Layout>
@@ -46,8 +57,8 @@ export default function HomePage() {
       <section className="relative min-h-[80vh] flex items-center" data-testid="hero-section">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.pexels.com/photos/7144667/pexels-photo-7144667.jpeg"
-            alt="Hope"
+            src="https://images.pexels.com/photos/5407206/pexels-photo-5407206.jpeg"
+            alt="Healthcare support"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 hero-overlay" />
@@ -58,8 +69,13 @@ export default function HomePage() {
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
               {t('hero.title')}
             </h1>
-            <p className="text-lg sm:text-xl text-slate-200 mb-8 leading-relaxed">
+            <p className="text-lg sm:text-xl text-slate-200 mb-6 leading-relaxed">
               {t('hero.subtitle')}
+            </p>
+            {/* Hero Trust Line */}
+            <p className="text-teal-300 text-sm font-medium mb-8 flex items-center">
+              <Shield className="w-4 h-4 mr-2" />
+              {t('hero.trustLine')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/donate">
@@ -86,12 +102,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Campaigns Section */}
-      <section className="py-20 bg-white" data-testid="campaigns-section">
+      {/* Featured Campaigns Section */}
+      <section className="py-20 bg-white" data-testid="featured-campaigns-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-navy mb-4">
-              {t('campaigns.title')}
+              {t('campaigns.featuredTitle')}
             </h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto">
               {t('campaigns.subtitle')}
@@ -99,7 +115,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {campaigns.map((campaign) => {
+            {featuredCampaigns.map((campaign) => {
               const Icon = getCampaignIcon(campaign.slug);
               return (
                 <Card 
@@ -143,8 +159,58 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* More Programs Section */}
+      {otherCampaigns.length > 0 && (
+        <section className="py-20 bg-slate-50" data-testid="more-programs-section">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-navy mb-4">
+                {t('campaigns.morePrograms')}
+              </h2>
+              <p className="text-slate-600 text-lg max-w-2xl mx-auto">
+                {t('campaigns.moreProgramsSubtitle')}
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {otherCampaigns.map((campaign) => {
+                const Icon = getCampaignIcon(campaign.slug);
+                return (
+                  <Card 
+                    key={campaign.id} 
+                    className="card-lift border-0 shadow-md bg-white"
+                    data-testid={`program-card-${campaign.slug}`}
+                  >
+                    <CardContent className="p-6">
+                      <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center mb-4">
+                        <Icon className="w-6 h-6 text-teal-600" />
+                      </div>
+                      <h3 className="font-display text-lg font-semibold text-navy mb-2">
+                        {language === 'en' ? campaign.title_en : campaign.title_fr}
+                      </h3>
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-3">
+                        {language === 'en' ? campaign.summary_en : campaign.summary_fr}
+                      </p>
+                      <Link to={`/donate?campaign=${campaign.slug}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="w-full rounded-full border-teal-200 text-teal-600 hover:bg-teal-50"
+                        >
+                          {t('campaigns.supportCampaign')}
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Impact Section */}
-      <section className="py-20 bg-slate-50" data-testid="impact-section">
+      <section className="py-20 bg-white" data-testid="impact-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-navy mb-4">
@@ -194,7 +260,7 @@ export default function HomePage() {
 
       {/* Latest Updates Section */}
       {updates.length > 0 && (
-        <section className="py-20 bg-white" data-testid="updates-section">
+        <section className="py-20 bg-slate-50" data-testid="updates-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-12">
               <h2 className="font-display text-3xl sm:text-4xl font-bold text-navy">
@@ -240,13 +306,13 @@ export default function HomePage() {
               <div className="grid grid-cols-2 gap-4 mb-8">
                 <div className="bg-white/10 rounded-2xl p-6">
                   <p className="text-teal-400 font-mono text-3xl font-bold mb-1">
-                    ${summary.total_raised?.toLocaleString() || '0'}
+                    ${(summary.total_raised || 0).toLocaleString()}
                   </p>
                   <p className="text-slate-300 text-sm">{t('transparency.totalRaised')}</p>
                 </div>
                 <div className="bg-white/10 rounded-2xl p-6">
                   <p className="text-coral font-mono text-3xl font-bold mb-1">
-                    ${summary.total_spent?.toLocaleString() || '0'}
+                    ${Math.min(summary.total_spent || 0, summary.total_raised || 0).toLocaleString()}
                   </p>
                   <p className="text-slate-300 text-sm">{t('transparency.totalSpent')}</p>
                 </div>
@@ -266,19 +332,19 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
                       <CheckCircle className="w-5 h-5 text-teal-400" />
-                      <span className="text-white">Transparent reporting</span>
+                      <span className="text-white">{language === 'en' ? 'Transparent reporting' : 'Rapports transparents'}</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <CheckCircle className="w-5 h-5 text-teal-400" />
-                      <span className="text-white">Detailed impact reports</span>
+                      <span className="text-white">{language === 'en' ? 'Detailed impact reports' : 'Rapports d\'impact détaillés'}</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <CheckCircle className="w-5 h-5 text-teal-400" />
-                      <span className="text-white">Verified local partners</span>
+                      <span className="text-white">{language === 'en' ? 'Verified local partners' : 'Partenaires locaux vérifiés'}</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <Shield className="w-5 h-5 text-teal-400" />
-                      <span className="text-white">Secure donations</span>
+                      <span className="text-white">{language === 'en' ? 'Secure donations' : 'Dons sécurisés'}</span>
                     </div>
                   </div>
                 </div>
