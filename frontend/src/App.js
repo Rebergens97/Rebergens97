@@ -1,53 +1,116 @@
-import { useEffect } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { LanguageProvider } from "./context/LanguageContext";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Public Pages
+import HomePage from "./pages/HomePage";
+import DonatePage from "./pages/DonatePage";
+import CampaignPage from "./pages/CampaignPage";
+import CampaignsPage from "./pages/CampaignsPage";
+import TransparencyPage from "./pages/TransparencyPage";
+import FAQPage from "./pages/FAQPage";
+import ContactPage from "./pages/ContactPage";
+import ThankYouPage from "./pages/ThankYouPage";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+// Admin Pages
+import AdminLoginPage from "./pages/admin/AdminLoginPage";
+import ChangePasswordPage from "./pages/admin/ChangePasswordPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminCampaignsPage from "./pages/admin/AdminCampaignsPage";
+import AdminDonationsPage from "./pages/admin/AdminDonationsPage";
+import AdminReportsPage from "./pages/admin/AdminReportsPage";
+import AdminUpdatesPage from "./pages/admin/AdminUpdatesPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <LanguageProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/donate" element={<DonatePage />} />
+            <Route path="/campaign/:slug" element={<CampaignPage />} />
+            <Route path="/campaigns" element={<CampaignsPage />} />
+            <Route path="/transparency" element={<TransparencyPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/thank-you" element={<ThankYouPage />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route 
+              path="/admin/change-password" 
+              element={
+                <ProtectedRoute>
+                  <ChangePasswordPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'editor', 'viewer']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/campaigns" 
+              element={
+                <ProtectedRoute allowedRoles={['owner', 'admin']}>
+                  <AdminCampaignsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/donations" 
+              element={
+                <ProtectedRoute allowedRoles={['owner', 'admin']}>
+                  <AdminDonationsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/reports" 
+              element={
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'editor']}>
+                  <AdminReportsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/updates" 
+              element={
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'editor']}>
+                  <AdminUpdatesPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/settings" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <AdminSettingsPage />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 
