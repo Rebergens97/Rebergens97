@@ -81,8 +81,11 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 
 ## Admin Credentials
 - Email: admin@drepanhope.org
-- Default temp password: Temp@12345! (after calling POST /api/dev/reset-owner)
-- To reset password: POST https://[your-domain]/api/dev/reset-owner
+- Default temp password: Temp@12345! (after clicking "Reset Owner Password" button or calling POST /api/dev/reset-owner)
+- Login page has a DEV DEBUG MODE panel with:
+  - API URL display
+  - "Reset Owner Password" button
+  - Debug info showing reset/login results
 - Force password change is enforced on first login
 
 ## Tech Stack
