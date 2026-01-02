@@ -279,6 +279,25 @@ export const translations = {
       readMore: "Lire Plus"
     },
     
+    // Blog
+    blog: {
+      title: "Blog",
+      subtitle: "Actualités, histoires et mises à jour de DrepanHope Foundation",
+      searchPlaceholder: "Rechercher des articles...",
+      filterByTag: "Filtrer",
+      allPosts: "Tous",
+      noPosts: "Aucun article pour le moment. Revenez bientôt !",
+      readMore: "Lire Plus",
+      backToBlog: "Retour au Blog",
+      share: "Partager",
+      linkCopied: "Lien copié !",
+      notFound: "Article non trouvé",
+      relatedPosts: "Articles Connexes",
+      relatedCampaign: "Soutenez Cette Campagne",
+      ctaTitle: "Faites la Différence Aujourd'hui",
+      ctaSubtitle: "Votre don nous aide à poursuivre notre mission de lutte contre la drépanocytose et de soutien aux familles."
+    },
+    
     // Footer
     footer: {
       tagline: "Basée aux États-Unis • Mission globale • Transparence",
