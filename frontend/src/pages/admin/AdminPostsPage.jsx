@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Eye, EyeOff, BookOpen, Calendar, ExternalLink, Tag } from 'lucide-react';
+import ImageUpload from '../../components/ImageUpload';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
