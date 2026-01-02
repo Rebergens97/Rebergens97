@@ -796,6 +796,63 @@ async def admin_toggle_post_publish(post_id: str, published: bool, user: dict = 
     await create_audit_log(user["id"], "publish" if published else "unpublish", "post", post_id)
     return {"success": True}
 
+# ==================== IMAGE UPLOAD ====================
+
+DEFAULT_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1584515933487-779824d29309?w=800"
+
+@api_router.post("/upload/image")
+async def upload_image(
+    file: UploadFile = File(...),
+    folder: str = "drepanhope",
+    user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR]))
+):
+    """
+    Upload an image to Cloudinary.
+    Returns the public URL of the uploaded image.
+    """
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: JPEG, PNG, WebP, GIF"
+        )
+    
+    # Read file content
+    contents = await file.read()
+    
+    # Validate file size (max 10MB)
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File size exceeds 10MB limit")
+    
+    try:
+        # Generate unique public ID
+        unique_id = f"{folder}/{uuid.uuid4().hex}"
+        
+        # Upload to Cloudinary
+        result = cloudinary.uploader.upload(
+            contents,
+            public_id=unique_id,
+            resource_type="auto",
+            transformation=[
+                {"width": 1200, "height": 630, "crop": "limit", "quality": "auto"}
+            ]
+        )
+        
+        logger.info(f"Image uploaded to Cloudinary: {result['secure_url']}")
+        
+        return {
+            "success": True,
+            "url": result["secure_url"],
+            "public_id": result["public_id"],
+            "width": result.get("width"),
+            "height": result.get("height")
+        }
+        
+    except Exception as e:
+        logger.error(f"Cloudinary upload error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+
 # Users Management (Owner only)
 @api_router.get("/admin/users")
 async def admin_get_users(user: dict = Depends(require_roles([UserRole.OWNER]))):
