@@ -163,6 +163,7 @@ export const translations = {
     nav: {
       home: "Accueil",
       campaigns: "Campagnes",
+      blog: "Blog",
       transparency: "Transparence",
       faq: "FAQ",
       contact: "Contact",
