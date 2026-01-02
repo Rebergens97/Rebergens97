@@ -39,6 +39,8 @@ function App() {
             <Route path="/donate" element={<DonatePage />} />
             <Route path="/campaign/:slug" element={<CampaignPage />} />
             <Route path="/campaigns" element={<CampaignsPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/transparency" element={<TransparencyPage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/contact" element={<ContactPage />} />
