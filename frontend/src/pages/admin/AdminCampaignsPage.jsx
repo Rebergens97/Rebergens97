@@ -9,10 +9,97 @@ import { Switch } from '../../components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Loader2, Target, Star, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, Target, Star, GripVertical, ArrowUp, ArrowDown, Move } from 'lucide-react';
 import ImageUpload from '../../components/ImageUpload';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// Sortable Campaign Row Component
+function SortableCampaignRow({ campaign, onEdit, onDelete, onToggleFeatured }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: campaign.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <tr ref={setNodeRef} style={style} className="border-b border-slate-100 hover:bg-slate-50">
+      <td className="py-4 px-4">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-slate-200 rounded"
+        >
+          <GripVertical className="w-5 h-5 text-slate-400" />
+        </button>
+      </td>
+      <td className="py-4 px-4">
+        <div className="flex items-center space-x-3">
+          {campaign.cover_image && (
+            <img src={campaign.cover_image} alt="" className="w-12 h-12 rounded-lg object-cover" />
+          )}
+          <div>
+            <p className="font-medium text-navy">{campaign.title_en}</p>
+            <p className="text-slate-400 text-xs">{campaign.title_fr}</p>
+          </div>
+        </div>
+      </td>
+      <td className="py-4 px-4">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          campaign.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
+        }`}>
+          {campaign.active ? 'Active' : 'Inactive'}
+        </span>
+      </td>
+      <td className="py-4 px-4">
+        <button
+          onClick={() => onToggleFeatured(campaign)}
+          className={`p-1 rounded ${campaign.featured ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'}`}
+        >
+          <Star className="w-5 h-5" fill={campaign.featured ? 'currentColor' : 'none'} />
+        </button>
+      </td>
+      <td className="py-4 px-4 text-slate-500 text-sm">
+        {campaign.sort_order ?? '-'}
+      </td>
+      <td className="py-4 px-4">
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm" onClick={() => onEdit(campaign)}>
+            <Edit className="w-4 h-4 text-slate-500" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => onDelete(campaign.id)}>
+            <Trash2 className="w-4 h-4 text-red-500" />
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export default function AdminCampaignsPage() {
   const [campaigns, setCampaigns] = useState([]);
@@ -20,6 +107,14 @@ export default function AdminCampaignsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [reorderMode, setReorderMode] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const [formData, setFormData] = useState({
     slug: '',
