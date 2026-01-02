@@ -1,10 +1,33 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { Heart, Mail, Phone, Facebook, Twitter, Instagram } from 'lucide-react';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export const Footer = () => {
   const { t, language } = useLanguage();
   const currentYear = new Date().getFullYear();
+  const [settings, setSettings] = useState({
+    contact_email: 'contact@drepanhope.org',
+    whatsapp: '+1 (000) 000-0000',
+    facebook: '',
+    twitter: '',
+    instagram: ''
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get(`${API}/settings/public`);
+        setSettings(response.data);
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   return (
     <footer className="bg-navy text-white">
@@ -35,6 +58,11 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/blog" className="text-slate-300 hover:text-teal-400 transition-colors text-sm">
+                  {t('nav.blog')}
+                </Link>
+              </li>
+              <li>
                 <Link to="/transparency" className="text-slate-300 hover:text-teal-400 transition-colors text-sm">
                   {t('nav.transparency')}
                 </Link>
@@ -56,25 +84,58 @@ export const Footer = () => {
           <div>
             <h3 className="font-semibold text-white mb-4">{t('contact.title')}</h3>
             <ul className="space-y-3">
-              <li className="flex items-center space-x-2 text-slate-300 text-sm">
-                <Mail className="w-4 h-4 text-teal-400" />
-                <span>contact@drepanhope.org</span>
+              <li>
+                <a 
+                  href={`mailto:${settings.contact_email}`}
+                  className="flex items-center space-x-2 text-slate-300 text-sm hover:text-teal-400 transition-colors"
+                >
+                  <Mail className="w-4 h-4 text-teal-400" />
+                  <span>{settings.contact_email}</span>
+                </a>
               </li>
-              <li className="flex items-center space-x-2 text-slate-300 text-sm">
-                <Phone className="w-4 h-4 text-teal-400" />
-                <span>+1 (000) 000-0000</span>
+              <li>
+                <a 
+                  href={`https://wa.me/${settings.whatsapp?.replace(/[^0-9+]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 text-slate-300 text-sm hover:text-teal-400 transition-colors"
+                >
+                  <Phone className="w-4 h-4 text-teal-400" />
+                  <span>{settings.whatsapp}</span>
+                </a>
               </li>
             </ul>
             <div className="flex space-x-3 mt-4">
-              <a href="#" className="w-8 h-8 rounded-full bg-slate-700 hover:bg-teal-600 flex items-center justify-center transition-colors">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-slate-700 hover:bg-teal-600 flex items-center justify-center transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-slate-700 hover:bg-teal-600 flex items-center justify-center transition-colors">
-                <Instagram className="w-4 h-4" />
-              </a>
+              {settings.facebook && (
+                <a 
+                  href={settings.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-slate-700 hover:bg-teal-600 flex items-center justify-center transition-colors"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+              )}
+              {settings.twitter && (
+                <a 
+                  href={settings.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-slate-700 hover:bg-teal-600 flex items-center justify-center transition-colors"
+                >
+                  <Twitter className="w-4 h-4" />
+                </a>
+              )}
+              {settings.instagram && (
+                <a 
+                  href={settings.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-slate-700 hover:bg-teal-600 flex items-center justify-center transition-colors"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
             </div>
           </div>
         </div>
