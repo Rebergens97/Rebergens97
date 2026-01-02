@@ -44,7 +44,11 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 - ✅ Dev endpoint to reset owner password (POST /api/dev/reset-owner) - disabled in production
 - ✅ Force password change enforcement on all protected routes
 - ✅ Clear login error messages (User not found / Wrong password / User disabled)
-- ✅ Dashboard with donation stats
+- ✅ **Dashboard Metrics** - Revenue shows PAID only, separate pending stats
+  - Today/Month/All Time Revenue = sum of paid donations
+  - Pending card shows count + amount separately
+  - Status Overview shows breakdown by paid/pending
+  - By Campaign shows paid totals only
 - ✅ **Campaign Ordering** - Drag-and-drop reordering with dnd-kit
 - ✅ Campaigns management with featured flag and reordering
 - ✅ Custom donation impact texts (EN/FR) per campaign
