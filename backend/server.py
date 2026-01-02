@@ -325,7 +325,12 @@ async def get_campaigns(active_only: bool = True, featured_only: bool = False):
         query["active"] = True
     if featured_only:
         query["featured"] = True
-    campaigns = await db.campaigns.find(query, {"_id": 0}).sort("sort_order", 1).to_list(100)
+    # Sort by featured desc, sort_order asc, created_at asc
+    campaigns = await db.campaigns.find(query, {"_id": 0}).sort([
+        ("featured", -1),
+        ("sort_order", 1),
+        ("created_at", 1)
+    ]).to_list(100)
     return campaigns
 
 @api_router.get("/campaigns/{slug}")
