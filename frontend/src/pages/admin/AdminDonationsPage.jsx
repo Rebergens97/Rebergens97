@@ -15,9 +15,9 @@ export default function AdminDonationsPage() {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    status: '',
-    campaign_id: '',
-    donation_type: ''
+    status: 'all',
+    campaign_id: 'all',
+    donation_type: 'all'
   });
 
   useEffect(() => {
@@ -81,9 +81,9 @@ export default function AdminDonationsPage() {
   };
 
   const filteredDonations = donations.filter(d => {
-    if (filters.status && d.status !== filters.status) return false;
-    if (filters.campaign_id && d.campaign_id !== filters.campaign_id) return false;
-    if (filters.donation_type && d.donation_type !== filters.donation_type) return false;
+    if (filters.status && filters.status !== 'all' && d.status !== filters.status) return false;
+    if (filters.campaign_id && filters.campaign_id !== 'all' && d.campaign_id !== filters.campaign_id) return false;
+    if (filters.donation_type && filters.donation_type !== 'all' && d.donation_type !== filters.donation_type) return false;
     return true;
   });
 
@@ -133,7 +133,7 @@ export default function AdminDonationsPage() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="failed">Failed</SelectItem>
@@ -148,8 +148,8 @@ export default function AdminDonationsPage() {
                   <SelectValue placeholder="Campaign" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Campaigns</SelectItem>
-                  {campaigns.map(c => (
+                  <SelectItem value="all">All Campaigns</SelectItem>
+                  {campaigns.filter(c => c.id).map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.title_en}</SelectItem>
                   ))}
                 </SelectContent>
@@ -163,17 +163,17 @@ export default function AdminDonationsPage() {
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="one_time">One-time</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
                 </SelectContent>
               </Select>
 
-              {(filters.status || filters.campaign_id || filters.donation_type) && (
+              {(filters.status !== 'all' || filters.campaign_id !== 'all' || filters.donation_type !== 'all') && (
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => setFilters({ status: '', campaign_id: '', donation_type: '' })}
+                  onClick={() => setFilters({ status: 'all', campaign_id: 'all', donation_type: 'all' })}
                 >
                   Clear
                 </Button>
