@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/button';
@@ -19,10 +19,25 @@ export default function AdminLoginPage() {
   const [resetting, setResetting] = useState(false);
   const [email, setEmail] = useState('admin@drepanhope.org');
   const [password, setPassword] = useState('');
+  const [devMode, setDevMode] = useState(false);
   
   // Debug state
   const [debugInfo, setDebugInfo] = useState(null);
   const [resetResult, setResetResult] = useState(null);
+
+  // Check if dev mode is enabled
+  useEffect(() => {
+    const checkDevMode = async () => {
+      try {
+        const response = await axios.get(`${API}/config`);
+        setDevMode(response.data.dev_mode === true);
+      } catch (error) {
+        console.log('Config check failed, assuming production mode');
+        setDevMode(false);
+      }
+    };
+    checkDevMode();
+  }, []);
 
   const handleResetOwner = async () => {
     setResetting(true);
@@ -30,11 +45,9 @@ export default function AdminLoginPage() {
     setDebugInfo(null);
     
     const resetUrl = `${API}/dev/reset-owner`;
-    console.log('[DEBUG] Calling reset-owner:', resetUrl);
     
     try {
       const response = await axios.post(resetUrl);
-      console.log('[DEBUG] Reset response:', response.data);
       setResetResult({
         success: true,
         data: response.data,
@@ -43,7 +56,6 @@ export default function AdminLoginPage() {
       setPassword(response.data.temporary_password || 'Temp@12345!');
       toast.success(`Password reset! Use: ${response.data.temporary_password}`);
     } catch (error) {
-      console.error('[DEBUG] Reset error:', error);
       setResetResult({
         success: false,
         error: error.response?.data || error.message,
