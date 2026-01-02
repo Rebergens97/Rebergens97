@@ -297,12 +297,11 @@ export default function AdminCampaignsPage() {
                 </div>
 
                 <div>
-                  <Label>Cover Image URL</Label>
-                  <Input
+                  <ImageUpload
                     value={formData.cover_image}
-                    onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
-                    placeholder="https://..."
-                    className="mt-1"
+                    onChange={(url) => setFormData({ ...formData, cover_image: url })}
+                    label="Cover Image"
+                    folder="campaigns"
                   />
                 </div>
 
