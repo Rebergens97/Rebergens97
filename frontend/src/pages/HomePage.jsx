@@ -178,20 +178,20 @@ export default function HomePage() {
                 return (
                   <Card 
                     key={campaign.id} 
-                    className="card-lift border-0 shadow-md bg-white"
+                    className="card-lift border-0 shadow-md bg-white h-full"
                     data-testid={`program-card-${campaign.slug}`}
                   >
-                    <CardContent className="p-6">
+                    <CardContent className="p-6 h-full flex flex-col">
                       <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center mb-4">
                         <Icon className="w-6 h-6 text-teal-600" />
                       </div>
                       <h3 className="font-display text-lg font-semibold text-navy mb-2">
                         {language === 'en' ? campaign.title_en : campaign.title_fr}
                       </h3>
-                      <p className="text-slate-600 text-sm mb-4 line-clamp-3">
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-3 flex-grow">
                         {language === 'en' ? campaign.summary_en : campaign.summary_fr}
                       </p>
-                      <Link to={`/donate?campaign=${campaign.slug}`}>
+                      <Link to={`/donate?campaign=${campaign.slug}`} className="mt-auto">
                         <Button 
                           variant="outline" 
                           size="sm"
