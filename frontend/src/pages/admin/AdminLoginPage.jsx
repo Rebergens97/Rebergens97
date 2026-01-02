@@ -183,6 +183,7 @@ export default function AdminLoginPage() {
               </div>
             )}
           </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
