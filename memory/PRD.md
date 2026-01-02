@@ -33,6 +33,10 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 - ✅ Contact page with form, email, WhatsApp
 - ✅ Thank You page with next steps
 - ✅ Dynamic footer year
+- ✅ **Blog** - /blog page with post listing, tags, search
+- ✅ **Single Post** - /blog/:slug with full content, share, related posts
+- ✅ **Blog in nav** - Added to header between Campaigns and Transparency
+- ✅ **Donate CTA on blog** - Both listing and single post pages
 
 ### Admin Panel
 - ✅ JWT authentication with password change on first login
@@ -43,6 +47,7 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 - ✅ Campaigns management with featured flag and reordering
 - ✅ Custom donation impact texts (EN/FR) per campaign
 - ✅ Donations management with status change and CSV export
+- ✅ **Blog Posts management** - /admin/posts with CRUD, draft/published toggle
 - ✅ Transparency reports management
 - ✅ News updates management
 - ✅ User management (Owner only)
