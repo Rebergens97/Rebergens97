@@ -358,18 +358,36 @@ async def get_public_settings():
 
 @api_router.post("/auth/login")
 async def login(credentials: UserLogin):
+    logger.info(f"Login attempt for email: {credentials.email}")
+    
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
     if not user:
+        logger.warning(f"Login failed: User not found for email {credentials.email}")
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    if not user.get("password_hash"):
+        logger.warning(f"Login failed: No password hash for user {credentials.email}")
+        raise HTTPException(status_code=401, detail="Invalid credentials - no password set")
+    
+    try:
+        password_valid = verify_password(credentials.password, user["password_hash"])
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    if not verify_password(credentials.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not password_valid:
+        logger.warning(f"Login failed: Wrong password for user {credentials.email}")
+        raise HTTPException(status_code=401, detail="Wrong password")
+    
     if user.get("status") != "active":
-        raise HTTPException(status_code=401, detail="Account is disabled")
+        logger.warning(f"Login failed: User {credentials.email} is disabled")
+        raise HTTPException(status_code=401, detail="User account is disabled")
     
     # Update last login
     await db.users.update_one({"id": user["id"]}, {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}})
     
     token = create_jwt_token(user["id"], user["email"], user["role"])
+    logger.info(f"Login successful for user {credentials.email}")
     return {
         "token": token,
         "user": {
