@@ -6,12 +6,12 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Card, CardContent } from '../components/ui/card';
 import { Switch } from '../components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { Heart, Shield, Users, CheckCircle, Loader2 } from 'lucide-react';
+import { Heart, Shield, Users, CheckCircle, Loader2, ChevronDown } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -46,6 +46,8 @@ export default function DonatePage() {
           const campaign = response.data.find(c => c.slug === campaignSlug);
           if (campaign) {
             setSelectedCampaign(campaign);
+          } else {
+            setSelectedCampaign(response.data[0]);
           }
         } else if (response.data.length > 0) {
           setSelectedCampaign(response.data[0]);
@@ -57,6 +59,13 @@ export default function DonatePage() {
     };
     fetchCampaigns();
   }, [searchParams]);
+
+  const handleCampaignChange = (campaignId) => {
+    const campaign = campaigns.find(c => c.id === campaignId);
+    setSelectedCampaign(campaign);
+    setSelectedAmount(null);
+    setCustomAmount('');
+  };
 
   const handleAmountSelect = (amount) => {
     setSelectedAmount(amount);
@@ -72,6 +81,19 @@ export default function DonatePage() {
   const getFinalAmount = () => {
     if (customAmount) return parseInt(customAmount);
     return selectedAmount;
+  };
+
+  const getImpactText = () => {
+    const amount = getFinalAmount();
+    if (!amount || !selectedCampaign?.amount_cards) return null;
+    
+    const card = selectedCampaign.amount_cards.find(c => c.amount === amount);
+    if (card) {
+      return language === 'en' ? card.impact_en : card.impact_fr;
+    }
+    return language === 'en' 
+      ? 'Your custom donation makes a meaningful impact.'
+      : 'Votre don personnalisé a un impact significatif.';
   };
 
   const handleSubmit = async (e) => {
@@ -135,32 +157,48 @@ export default function DonatePage() {
             <div className="lg:col-span-2">
               <Card className="border-0 shadow-lg">
                 <CardContent className="p-6 sm:p-8">
-                  {/* Campaign Tabs */}
+                  {/* Campaign Selector Dropdown */}
                   {campaigns.length > 0 && (
-                    <Tabs 
-                      value={selectedCampaign?.slug || campaigns[0]?.slug}
-                      onValueChange={(slug) => {
-                        const campaign = campaigns.find(c => c.slug === slug);
-                        setSelectedCampaign(campaign);
-                        setSelectedAmount(null);
-                      }}
-                      className="mb-8"
-                    >
-                      <TabsList className="w-full grid grid-cols-2 h-auto p-1 bg-slate-100 rounded-xl">
-                        {campaigns.map((campaign) => (
-                          <TabsTrigger 
-                            key={campaign.slug} 
-                            value={campaign.slug}
-                            className="rounded-lg py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                            data-testid={`campaign-tab-${campaign.slug}`}
-                          >
-                            <span className="text-sm font-medium">
-                              {language === 'en' ? campaign.title_en : campaign.title_fr}
-                            </span>
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
+                    <div className="mb-8">
+                      <Label className="text-base font-semibold text-navy mb-3 block">
+                        {t('donate.selectCampaign')}
+                      </Label>
+                      <Select 
+                        value={selectedCampaign?.id}
+                        onValueChange={handleCampaignChange}
+                      >
+                        <SelectTrigger 
+                          className="w-full h-14 rounded-xl border-slate-200 text-left"
+                          data-testid="campaign-selector"
+                        >
+                          <SelectValue placeholder={t('donate.selectCampaign')}>
+                            {selectedCampaign && (
+                              <span className="font-medium">
+                                {language === 'en' ? selectedCampaign.title_en : selectedCampaign.title_fr}
+                              </span>
+                            )}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {campaigns.map((campaign) => (
+                            <SelectItem 
+                              key={campaign.id} 
+                              value={campaign.id}
+                              className="py-3"
+                            >
+                              <div>
+                                <p className="font-medium">
+                                  {language === 'en' ? campaign.title_en : campaign.title_fr}
+                                </p>
+                                <p className="text-slate-500 text-sm line-clamp-1">
+                                  {language === 'en' ? campaign.summary_en : campaign.summary_fr}
+                                </p>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
 
                   {/* Amount Selection */}
@@ -200,16 +238,10 @@ export default function DonatePage() {
                     </div>
 
                     {/* Impact Text */}
-                    {(selectedAmount || customAmount) && selectedCampaign?.amount_cards && (
+                    {getImpactText() && (
                       <div className="mt-4 p-4 bg-teal-50 rounded-xl border border-teal-100">
                         <p className="text-teal-700 text-sm">
-                          {selectedCampaign.amount_cards.find(c => c.amount === (selectedAmount || parseInt(customAmount)))
-                            ? (language === 'en' 
-                              ? selectedCampaign.amount_cards.find(c => c.amount === selectedAmount)?.impact_en
-                              : selectedCampaign.amount_cards.find(c => c.amount === selectedAmount)?.impact_fr)
-                            : (language === 'en' 
-                              ? 'Your custom donation makes a meaningful impact.'
-                              : 'Votre don personnalisé a un impact significatif.')}
+                          {getImpactText()}
                         </p>
                       </div>
                     )}
