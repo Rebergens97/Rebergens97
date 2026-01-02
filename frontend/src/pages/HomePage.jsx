@@ -261,22 +261,53 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Latest Updates Section */}
-      {updates.length > 0 && (
+      {/* Latest Updates Section - Show Blog Posts */}
+      {(posts.length > 0 || updates.length > 0) && (
         <section className="py-20 bg-slate-50" data-testid="updates-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-12">
               <h2 className="font-display text-3xl sm:text-4xl font-bold text-navy">
                 {t('updates.title')}
               </h2>
-              <Link to="/transparency" className="text-teal-600 hover:text-teal-700 font-medium flex items-center">
+              <Link to="/blog" className="text-teal-600 hover:text-teal-700 font-medium flex items-center">
                 {t('common.viewAll')}
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              {updates.map((update) => (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Show blog posts first */}
+              {posts.slice(0, 3).map((post) => (
+                <Card key={post.id} className="border-0 shadow-md card-lift overflow-hidden">
+                  {post.cover_image && (
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        src={post.cover_image}
+                        alt={language === 'en' ? post.title_en : post.title_fr}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <div className="flex items-center space-x-2 text-slate-500 text-sm mb-3">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <h3 className="font-display text-xl font-semibold text-navy mb-2 line-clamp-2">
+                      {language === 'en' ? post.title_en : post.title_fr}
+                    </h3>
+                    <p className="text-slate-600 line-clamp-2 mb-4">
+                      {language === 'en' ? post.excerpt_en : post.excerpt_fr}
+                    </p>
+                    <Link to={`/blog/${post.slug}`} className="text-teal-600 hover:text-teal-700 font-medium flex items-center">
+                      {t('updates.readMore')}
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Link>
+                  </div>
+                </Card>
+              ))}
+              {/* Fill remaining slots with updates if no posts */}
+              {posts.length === 0 && updates.map((update) => (
                 <Card key={update.id} className="p-6 border-0 shadow-md card-lift">
                   <div className="flex items-center space-x-2 text-slate-500 text-sm mb-3">
                     <Calendar className="w-4 h-4" />
