@@ -178,20 +178,20 @@ export default function CampaignsPage() {
                       return (
                         <Card 
                           key={campaign.id}
-                          className="card-lift border-0 shadow-md"
+                          className="card-lift border-0 shadow-md h-full"
                           data-testid={`campaign-card-${campaign.slug}`}
                         >
-                          <CardContent className="p-6">
+                          <CardContent className="p-6 h-full flex flex-col">
                             <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center mb-4">
                               <Icon className="w-6 h-6 text-teal-600" />
                             </div>
                             <h3 className="font-display text-lg font-semibold text-navy mb-2">
                               {title}
                             </h3>
-                            <p className="text-slate-600 text-sm mb-4 line-clamp-3">
+                            <p className="text-slate-600 text-sm mb-4 line-clamp-3 flex-grow">
                               {summary}
                             </p>
-                            <div className="space-y-2">
+                            <div className="space-y-2 mt-auto">
                               <Link to={`/campaign/${campaign.slug}`}>
                                 <Button 
                                   variant="outline" 
