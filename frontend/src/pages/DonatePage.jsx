@@ -112,24 +112,32 @@ export default function DonatePage() {
 
     setLoading(true);
     try {
-      await axios.post(`${API}/donations`, {
+      // Call Stripe checkout endpoint
+      const response = await axios.post(`${API}/donations/checkout`, {
+        campaign_id: selectedCampaign?.id,
+        amount: parseFloat(amount),
+        currency: 'usd',
+        interval: isMonthly ? 'monthly' : 'one_time',
         donor_first_name: formData.firstName,
         donor_last_name: formData.lastName,
-        email: formData.email,
-        country: formData.country,
-        amount: amount,
-        campaign_id: selectedCampaign?.id,
-        donation_type: isMonthly ? 'monthly' : 'one_time',
-        message: formData.message || null
+        donor_email: formData.email
       });
 
-      navigate('/thank-you', { 
-        state: { 
-          amount, 
-          campaign: selectedCampaign,
-          isMonthly 
-        } 
-      });
+      if (response.data.mode === 'stripe' && response.data.checkoutUrl) {
+        // Redirect to Stripe Checkout
+        window.location.href = response.data.checkoutUrl;
+      } else {
+        // Mock mode - redirect to thank you page
+        navigate('/thank-you', { 
+          state: { 
+            amount, 
+            campaign: selectedCampaign,
+            isMonthly,
+            donationId: response.data.donation_id,
+            mockMode: true
+          } 
+        });
+      }
     } catch (error) {
       console.error('Donation failed:', error);
       toast.error(language === 'en' ? 'Failed to process donation. Please try again.' : 'Échec du traitement du don. Veuillez réessayer.');
