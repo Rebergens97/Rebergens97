@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { Menu, Heart, Globe } from 'lucide-react';
+import { Menu, Heart } from 'lucide-react';
 
 export const Header = () => {
   const { t, language, setLanguage } = useLanguage();
@@ -33,7 +33,7 @@ export const Header = () => {
               <Heart className="w-5 h-5 text-white" />
             </div>
             <span className="font-display font-semibold text-navy text-lg hidden sm:block">
-              DrepanHope
+              DrepanHope Foundation
             </span>
           </Link>
 
@@ -56,15 +56,31 @@ export const Header = () => {
 
           {/* Right Section */}
           <div className="flex items-center space-x-3">
-            {/* Language Switcher */}
-            <button
-              onClick={() => setLanguage(language === 'en' ? 'fr' : 'en')}
-              className="flex items-center space-x-1 px-3 py-1.5 rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 transition-colors text-sm font-medium text-slate-600"
-              data-testid="language-switcher"
-            >
-              <Globe className="w-4 h-4" />
-              <span>{language === 'en' ? 'EN' : 'FR'}</span>
-            </button>
+            {/* Language Switcher - Explicit EN | FR */}
+            <div className="flex items-center border border-slate-200 rounded-full overflow-hidden">
+              <button
+                onClick={() => setLanguage('en')}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  language === 'en' 
+                    ? 'bg-teal-600 text-white' 
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                data-testid="lang-en"
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLanguage('fr')}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  language === 'fr' 
+                    ? 'bg-teal-600 text-white' 
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                data-testid="lang-fr"
+              >
+                FR
+              </button>
+            </div>
 
             {/* Donate Button */}
             <Link to="/donate">
@@ -84,7 +100,15 @@ export const Header = () => {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-72">
-                <nav className="flex flex-col space-y-2 mt-8">
+                <div className="flex items-center space-x-2 mb-6">
+                  <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center">
+                    <Heart className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="font-display font-semibold text-navy">
+                    DrepanHope Foundation
+                  </span>
+                </div>
+                <nav className="flex flex-col space-y-2">
                   {navLinks.map((link) => (
                     <Link
                       key={link.href}
@@ -99,10 +123,29 @@ export const Header = () => {
                       {link.label}
                     </Link>
                   ))}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-center space-x-2 mb-4">
+                      <button
+                        onClick={() => setLanguage('en')}
+                        className={`px-4 py-2 rounded-full text-sm font-medium ${
+                          language === 'en' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        English
+                      </button>
+                      <button
+                        onClick={() => setLanguage('fr')}
+                        className={`px-4 py-2 rounded-full text-sm font-medium ${
+                          language === 'fr' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        Français
+                      </button>
+                    </div>
+                  </div>
                   <Link
                     to="/donate"
                     onClick={() => setIsOpen(false)}
-                    className="mt-4"
                   >
                     <Button className="w-full rounded-full bg-coral hover:bg-coral-600 text-white font-semibold">
                       {t('nav.donate')}

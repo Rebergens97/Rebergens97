@@ -4,6 +4,7 @@ import { Heart, Mail, Phone, Facebook, Twitter, Instagram } from 'lucide-react';
 
 export const Footer = () => {
   const { t, language } = useLanguage();
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-navy text-white">
@@ -26,7 +27,7 @@ export const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Quick Links</h3>
+            <h3 className="font-semibold text-white mb-4">{t('footer.quickLinks')}</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/campaigns" className="text-slate-300 hover:text-teal-400 transition-colors text-sm">
@@ -80,7 +81,7 @@ export const Footer = () => {
 
         <div className="border-t border-slate-700 mt-10 pt-8 text-center">
           <p className="text-slate-400 text-sm">
-            {t('footer.copyright')}
+            © {currentYear} {t('footer.copyright')}
           </p>
         </div>
       </div>

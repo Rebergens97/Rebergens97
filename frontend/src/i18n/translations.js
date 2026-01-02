@@ -15,13 +15,17 @@ export const translations = {
     hero: {
       title: "Empowering Lives Through Hope",
       subtitle: "Join us in the fight against sickle cell disease and support prenatal genetic testing for families in need.",
-      cta: "Make a Donation"
+      cta: "Make a Donation",
+      trustLine: "Based in the USA • Global mission • Transparent reporting"
     },
     
     // Campaigns
     campaigns: {
       title: "Our Campaigns",
       subtitle: "Choose how you want to make an impact",
+      featuredTitle: "Featured Campaigns",
+      morePrograms: "More Programs",
+      moreProgramsSubtitle: "Explore additional ways to support our mission",
       sickleCellTitle: "Sickle Cell Disease Support",
       sickleCellDesc: "Help us provide screening, treatment, and support for those affected by sickle cell disease.",
       pregnancyTitle: "Pregnancy & Genetic Testing",
@@ -36,6 +40,7 @@ export const translations = {
     donate: {
       title: "Make a Difference Today",
       subtitle: "Your donation saves lives",
+      selectCampaign: "Select a Campaign",
       selectAmount: "Select an amount",
       customAmount: "Custom Amount",
       oneTime: "One-time",
@@ -60,7 +65,8 @@ export const translations = {
       lastUpdated: "Last Updated",
       reportsTitle: "Impact Reports",
       spent: "Amount Spent",
-      viewDetails: "View Details"
+      viewDetails: "View Details",
+      noReports: "No reports available yet. Check back soon!"
     },
     
     // FAQ
@@ -118,7 +124,8 @@ export const translations = {
     // Footer
     footer: {
       tagline: "Based in the USA • Global mission • Transparent reporting",
-      copyright: "© 2024 DrepanHope Foundation. All rights reserved."
+      copyright: "DrepanHope Foundation. All rights reserved.",
+      quickLinks: "Quick Links"
     },
     
     // Common
@@ -147,13 +154,17 @@ export const translations = {
     hero: {
       title: "Donner de l'Espoir, Transformer des Vies",
       subtitle: "Rejoignez-nous dans la lutte contre la drépanocytose et soutenez le dépistage génétique prénatal pour les familles dans le besoin.",
-      cta: "Faire un Don"
+      cta: "Faire un Don",
+      trustLine: "Basée aux États-Unis • Mission globale • Transparence"
     },
     
     // Campaigns
     campaigns: {
       title: "Nos Campagnes",
       subtitle: "Choisissez comment vous voulez avoir un impact",
+      featuredTitle: "Campagnes en Vedette",
+      morePrograms: "Autres Programmes",
+      moreProgramsSubtitle: "Découvrez d'autres façons de soutenir notre mission",
       sickleCellTitle: "Soutien à la Drépanocytose",
       sickleCellDesc: "Aidez-nous à fournir dépistage, traitement et soutien aux personnes atteintes de drépanocytose.",
       pregnancyTitle: "Grossesse & Dépistage Génétique",
@@ -168,6 +179,7 @@ export const translations = {
     donate: {
       title: "Faites la Différence Aujourd'hui",
       subtitle: "Votre don sauve des vies",
+      selectCampaign: "Sélectionnez une Campagne",
       selectAmount: "Sélectionnez un montant",
       customAmount: "Montant Personnalisé",
       oneTime: "Ponctuel",
@@ -192,7 +204,8 @@ export const translations = {
       lastUpdated: "Dernière Mise à Jour",
       reportsTitle: "Rapports d'Impact",
       spent: "Montant Dépensé",
-      viewDetails: "Voir les Détails"
+      viewDetails: "Voir les Détails",
+      noReports: "Aucun rapport disponible pour le moment. Revenez bientôt !"
     },
     
     // FAQ
@@ -250,7 +263,8 @@ export const translations = {
     // Footer
     footer: {
       tagline: "Basée aux États-Unis • Mission globale • Transparence",
-      copyright: "© 2024 DrepanHope Foundation. Tous droits réservés."
+      copyright: "DrepanHope Foundation. Tous droits réservés.",
+      quickLinks: "Liens Rapides"
     },
     
     // Common
