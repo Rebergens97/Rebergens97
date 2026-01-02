@@ -12,6 +12,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export default function HomePage() {
   const { t, language } = useLanguage();
   const [campaigns, setCampaigns] = useState([]);
+  const [posts, setPosts] = useState([]);
   const [updates, setUpdates] = useState([]);
   const [summary, setSummary] = useState({ total_raised: 0, total_spent: 0 });
   const [loading, setLoading] = useState(true);
@@ -19,12 +20,14 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [campaignsRes, updatesRes, summaryRes] = await Promise.all([
+        const [campaignsRes, postsRes, updatesRes, summaryRes] = await Promise.all([
           axios.get(`${API}/campaigns`),
+          axios.get(`${API}/posts?limit=3`),
           axios.get(`${API}/updates?published_only=true`),
           axios.get(`${API}/transparency/summary`)
         ]);
         setCampaigns(campaignsRes.data);
+        setPosts(postsRes.data);
         setUpdates(updatesRes.data.slice(0, 2));
         setSummary(summaryRes.data);
       } catch (error) {
