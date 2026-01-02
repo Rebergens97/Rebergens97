@@ -360,34 +360,63 @@ async def get_public_settings():
 async def login(credentials: UserLogin):
     logger.info(f"Login attempt for email: {credentials.email}")
     
+    # Debug info for dev environment
+    debug_info = {"userFound": False, "passwordMatch": False, "userActive": False}
+    
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
     if not user:
         logger.warning(f"Login failed: User not found for email {credentials.email}")
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(
+            status_code=401, 
+            detail="User not found",
+            headers={"X-Debug-Info": "userFound=false"}
+        )
+    
+    debug_info["userFound"] = True
     
     if not user.get("password_hash"):
         logger.warning(f"Login failed: No password hash for user {credentials.email}")
-        raise HTTPException(status_code=401, detail="Invalid credentials - no password set")
+        raise HTTPException(
+            status_code=401, 
+            detail="Invalid credentials - no password set",
+            headers={"X-Debug-Info": f"userFound=true,hasPasswordHash=false"}
+        )
     
     try:
         password_valid = verify_password(credentials.password, user["password_hash"])
+        debug_info["passwordMatch"] = password_valid
     except Exception as e:
         logger.error(f"Password verification error: {e}")
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=401, 
+            detail=f"Invalid credentials - verification error: {str(e)}",
+            headers={"X-Debug-Info": f"userFound=true,verifyError={str(e)}"}
+        )
     
     if not password_valid:
         logger.warning(f"Login failed: Wrong password for user {credentials.email}")
-        raise HTTPException(status_code=401, detail="Wrong password")
+        raise HTTPException(
+            status_code=401, 
+            detail="Wrong password",
+            headers={"X-Debug-Info": "userFound=true,passwordMatch=false"}
+        )
+    
+    debug_info["userActive"] = user.get("status") == "active"
     
     if user.get("status") != "active":
         logger.warning(f"Login failed: User {credentials.email} is disabled")
-        raise HTTPException(status_code=401, detail="User account is disabled")
+        raise HTTPException(
+            status_code=401, 
+            detail="User account is disabled",
+            headers={"X-Debug-Info": "userFound=true,passwordMatch=true,userActive=false"}
+        )
     
     # Update last login
     await db.users.update_one({"id": user["id"]}, {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}})
     
     token = create_jwt_token(user["id"], user["email"], user["role"])
     logger.info(f"Login successful for user {credentials.email}")
+    
     return {
         "token": token,
         "user": {
@@ -396,7 +425,8 @@ async def login(credentials: UserLogin):
             "email": user["email"],
             "role": user["role"],
             "force_password_change": user.get("force_password_change", False)
-        }
+        },
+        "debug": debug_info  # Dev-only debug info
     }
 
 @api_router.post("/auth/change-password")
