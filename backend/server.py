@@ -178,6 +178,38 @@ class UpdateCreate(BaseModel):
     images: List[str] = []
     published: bool = True
 
+class Post(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    slug: str
+    title_en: str
+    title_fr: str
+    excerpt_en: str
+    excerpt_fr: str
+    content_en: str
+    content_fr: str
+    cover_image: str = ""
+    tags: List[str] = []
+    published: bool = False
+    published_at: Optional[datetime] = None
+    campaign_id: Optional[str] = None
+    author_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PostCreate(BaseModel):
+    slug: str
+    title_en: str
+    title_fr: str
+    excerpt_en: str
+    excerpt_fr: str
+    content_en: str
+    content_fr: str
+    cover_image: str = ""
+    tags: List[str] = []
+    published: bool = False
+    campaign_id: Optional[str] = None
+
 class AuditLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
