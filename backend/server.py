@@ -735,45 +735,89 @@ async def get_admin_stats(user: dict = Depends(require_roles([UserRole.OWNER, Us
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     first_of_month = today.replace(day=1)
     
-    donations_today = await db.donations.count_documents({"created_at": {"$gte": today.isoformat()}})
-    donations_month = await db.donations.count_documents({"created_at": {"$gte": first_of_month.isoformat()}})
-    donations_total = await db.donations.count_documents({})
+    # PAID donations only for revenue totals
+    paid_filter = {"status": "paid"}
     
-    amount_today = await db.donations.aggregate([
-        {"$match": {"created_at": {"$gte": today.isoformat()}}},
+    # Count ALL donations (for reference)
+    donations_today_all = await db.donations.count_documents({"created_at": {"$gte": today.isoformat()}})
+    donations_month_all = await db.donations.count_documents({"created_at": {"$gte": first_of_month.isoformat()}})
+    donations_total_all = await db.donations.count_documents({})
+    
+    # Count PAID donations only
+    donations_today_paid = await db.donations.count_documents({
+        "created_at": {"$gte": today.isoformat()},
+        **paid_filter
+    })
+    donations_month_paid = await db.donations.count_documents({
+        "created_at": {"$gte": first_of_month.isoformat()},
+        **paid_filter
+    })
+    donations_total_paid = await db.donations.count_documents(paid_filter)
+    
+    # Count PENDING donations
+    pending_filter = {"status": "pending"}
+    donations_pending_count = await db.donations.count_documents(pending_filter)
+    
+    # PAID amounts only for revenue
+    amount_today_paid = await db.donations.aggregate([
+        {"$match": {"created_at": {"$gte": today.isoformat()}, **paid_filter}},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ]).to_list(1)
     
-    amount_month = await db.donations.aggregate([
-        {"$match": {"created_at": {"$gte": first_of_month.isoformat()}}},
+    amount_month_paid = await db.donations.aggregate([
+        {"$match": {"created_at": {"$gte": first_of_month.isoformat()}, **paid_filter}},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ]).to_list(1)
     
-    amount_total = await db.donations.aggregate([
+    amount_total_paid = await db.donations.aggregate([
+        {"$match": paid_filter},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ]).to_list(1)
     
+    # PENDING amounts
+    amount_pending = await db.donations.aggregate([
+        {"$match": pending_filter},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]).to_list(1)
+    
+    # By campaign - PAID only
     by_campaign = await db.donations.aggregate([
+        {"$match": paid_filter},
         {"$group": {"_id": "$campaign_id", "total": {"$sum": "$amount"}, "count": {"$sum": 1}}}
     ]).to_list(100)
     
+    # By type - PAID only
     by_type = await db.donations.aggregate([
+        {"$match": paid_filter},
         {"$group": {"_id": "$donation_type", "count": {"$sum": 1}}}
+    ]).to_list(10)
+    
+    # By status (for overview)
+    by_status = await db.donations.aggregate([
+        {"$group": {"_id": "$status", "count": {"$sum": 1}, "total": {"$sum": "$amount"}}}
     ]).to_list(10)
     
     return {
         "donations": {
-            "today": donations_today,
-            "month": donations_month,
-            "total": donations_total
+            "today": donations_today_paid,
+            "month": donations_month_paid,
+            "total": donations_total_paid,
+            "today_all": donations_today_all,
+            "month_all": donations_month_all,
+            "total_all": donations_total_all
+        },
+        "pending": {
+            "count": donations_pending_count,
+            "amount": amount_pending[0]["total"] if amount_pending else 0
         },
         "amounts": {
-            "today": amount_today[0]["total"] if amount_today else 0,
-            "month": amount_month[0]["total"] if amount_month else 0,
-            "total": amount_total[0]["total"] if amount_total else 0
+            "today": amount_today_paid[0]["total"] if amount_today_paid else 0,
+            "month": amount_month_paid[0]["total"] if amount_month_paid else 0,
+            "total": amount_total_paid[0]["total"] if amount_total_paid else 0
         },
         "by_campaign": by_campaign,
-        "by_type": by_type
+        "by_type": by_type,
+        "by_status": by_status
     }
 
 # Campaigns Management
