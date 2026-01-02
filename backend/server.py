@@ -1171,19 +1171,43 @@ async def admin_toggle_user_status(user_id: str, status: str, user: dict = Depen
 
 # Settings Management (Owner only)
 @api_router.get("/admin/settings")
-async def admin_get_settings(user: dict = Depends(require_roles([UserRole.OWNER]))):
+async def admin_get_settings(user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN]))):
     settings = await db.settings.find_one({"id": "settings"}, {"_id": 0})
     if not settings:
-        settings = Settings().model_dump()
+        # Create default settings if none exist
+        default_settings = Settings()
+        doc = default_settings.model_dump()
+        doc['updated_at'] = doc['updated_at'].isoformat()
+        await db.settings.insert_one(doc)
+        settings = doc
     return settings
 
+class SettingsUpdate(BaseModel):
+    contact_email: Optional[str] = None
+    whatsapp: Optional[str] = None
+    facebook: Optional[str] = None
+    twitter: Optional[str] = None
+    instagram: Optional[str] = None
+
 @api_router.put("/admin/settings")
-async def admin_update_settings(data: dict, user: dict = Depends(require_roles([UserRole.OWNER]))):
-    data["id"] = "settings"
-    data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    await db.settings.update_one({"id": "settings"}, {"$set": data}, upsert=True)
-    await create_audit_log(user["id"], "update", "settings", "settings")
-    return {"success": True}
+async def admin_update_settings(data: SettingsUpdate, user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN]))):
+    # Build update data, filtering out None values
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["id"] = "settings"
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Upsert: create if not exists, update if exists
+    await db.settings.update_one(
+        {"id": "settings"}, 
+        {"$set": update_data}, 
+        upsert=True
+    )
+    
+    await create_audit_log(user["id"], "update", "settings", "settings", update_data)
+    
+    # Return the updated settings
+    updated_settings = await db.settings.find_one({"id": "settings"}, {"_id": 0})
+    return updated_settings
 
 # Audit Logs
 @api_router.get("/admin/audit-logs")
