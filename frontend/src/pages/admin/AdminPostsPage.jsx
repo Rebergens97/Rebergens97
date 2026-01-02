@@ -278,13 +278,11 @@ export default function AdminPostsPage() {
                 {/* Cover Image & Tags */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="cover_image">Cover Image URL</Label>
-                    <Input
-                      id="cover_image"
+                    <ImageUpload
                       value={formData.cover_image}
-                      onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
-                      placeholder="https://..."
-                      data-testid="post-cover-image"
+                      onChange={(url) => setFormData({ ...formData, cover_image: url })}
+                      label="Cover Image"
+                      folder="blog"
                     />
                   </div>
                   <div>
