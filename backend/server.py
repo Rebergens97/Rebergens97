@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -13,6 +13,8 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
 import secrets
+import cloudinary
+import cloudinary.uploader
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -26,6 +28,13 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', secrets.token_hex(32))
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
+
+# Cloudinary Configuration
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+)
 
 # Security
 security = HTTPBearer()
