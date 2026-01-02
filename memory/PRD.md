@@ -36,6 +36,9 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 
 ### Admin Panel
 - ✅ JWT authentication with password change on first login
+- ✅ Dev endpoint to reset owner password (POST /api/dev/reset-owner)
+- ✅ Force password change enforcement on all protected routes
+- ✅ Clear login error messages (User not found / Wrong password / User disabled)
 - ✅ Dashboard with donation stats
 - ✅ Campaigns management with featured flag and reordering
 - ✅ Custom donation impact texts (EN/FR) per campaign
