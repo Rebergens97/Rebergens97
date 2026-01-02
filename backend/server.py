@@ -711,6 +711,82 @@ async def admin_delete_update(update_id: str, user: dict = Depends(require_roles
     await create_audit_log(user["id"], "delete", "update", update_id)
     return {"success": True}
 
+# Posts/Blog Management
+@api_router.get("/admin/posts")
+async def admin_get_posts(user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR]))):
+    posts = await db.posts.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return posts
+
+@api_router.post("/admin/posts")
+async def admin_create_post(data: PostCreate, user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR]))):
+    # Check if slug already exists
+    existing = await db.posts.find_one({"slug": data.slug})
+    if existing:
+        raise HTTPException(status_code=400, detail="A post with this slug already exists")
+    
+    post = Post(**data.model_dump(), author_id=user["id"])
+    
+    # Set published_at if publishing
+    if data.published:
+        post.published_at = datetime.now(timezone.utc)
+    
+    doc = post.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    doc['updated_at'] = doc['updated_at'].isoformat()
+    if doc['published_at']:
+        doc['published_at'] = doc['published_at'].isoformat()
+    
+    await db.posts.insert_one(doc)
+    await create_audit_log(user["id"], "create", "post", post.id, {"title": data.title_en, "slug": data.slug})
+    return post
+
+@api_router.put("/admin/posts/{post_id}")
+async def admin_update_post(post_id: str, data: PostCreate, user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR]))):
+    # Check if slug is taken by another post
+    existing = await db.posts.find_one({"slug": data.slug, "id": {"$ne": post_id}})
+    if existing:
+        raise HTTPException(status_code=400, detail="A post with this slug already exists")
+    
+    # Get current post to check publish status change
+    current_post = await db.posts.find_one({"id": post_id}, {"_id": 0})
+    if not current_post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    update_data = data.model_dump()
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Set published_at if newly publishing
+    if data.published and not current_post.get("published"):
+        update_data["published_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.posts.update_one({"id": post_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    await create_audit_log(user["id"], "update", "post", post_id, {"title": data.title_en, "slug": data.slug})
+    return {"success": True}
+
+@api_router.delete("/admin/posts/{post_id}")
+async def admin_delete_post(post_id: str, user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN]))):
+    result = await db.posts.delete_one({"id": post_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    await create_audit_log(user["id"], "delete", "post", post_id)
+    return {"success": True}
+
+@api_router.put("/admin/posts/{post_id}/publish")
+async def admin_toggle_post_publish(post_id: str, published: bool, user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR]))):
+    update_data = {"published": published, "updated_at": datetime.now(timezone.utc).isoformat()}
+    if published:
+        update_data["published_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.posts.update_one({"id": post_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    await create_audit_log(user["id"], "publish" if published else "unpublish", "post", post_id)
+    return {"success": True}
+
 # Users Management (Owner only)
 @api_router.get("/admin/users")
 async def admin_get_users(user: dict = Depends(require_roles([UserRole.OWNER]))):
