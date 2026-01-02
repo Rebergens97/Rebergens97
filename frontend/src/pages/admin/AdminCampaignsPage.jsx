@@ -539,72 +539,152 @@ export default function AdminCampaignsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {campaigns.map((campaign, index) => (
-              <Card key={campaign.id} className="border-0 shadow-md overflow-hidden">
-                <div className="flex">
-                  {/* Reorder Controls */}
-                  <div className="flex flex-col justify-center px-2 bg-slate-50 border-r">
-                    <button
-                      onClick={() => handleReorder(index, 'up')}
-                      disabled={index === 0}
-                      className="p-1 hover:bg-slate-200 rounded disabled:opacity-30"
-                    >
-                      <ArrowUp className="w-4 h-4" />
-                    </button>
-                    <GripVertical className="w-4 h-4 text-slate-400 mx-auto my-1" />
-                    <button
-                      onClick={() => handleReorder(index, 'down')}
-                      disabled={index === campaigns.length - 1}
-                      className="p-1 hover:bg-slate-200 rounded disabled:opacity-30"
-                    >
-                      <ArrowDown className="w-4 h-4" />
-                    </button>
-                  </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={campaigns.map(c => c.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4">
+                {campaigns.map((campaign, index) => (
+                  <SortableCampaignCard 
+                    key={campaign.id} 
+                    campaign={campaign}
+                    index={index}
+                    totalCount={campaigns.length}
+                    onEdit={() => handleOpenDialog(campaign)}
+                    onDelete={() => handleDelete(campaign.id)}
+                    onReorder={handleReorder}
+                    onToggleFeatured={() => toggleFeatured(campaign)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </div>
+    </AdminLayout>
+  );
+}
 
-                  {campaign.cover_image && (
-                    <img 
-                      src={campaign.cover_image} 
-                      alt={campaign.title_en}
-                      className="w-40 h-28 object-cover hidden sm:block"
-                    />
-                  )}
-                  <CardContent className="flex-1 p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="font-display text-lg font-semibold text-navy">
-                            {campaign.title_en}
-                          </h3>
-                          {campaign.featured && (
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 flex items-center">
-                              <Star className="w-3 h-3 mr-1" />
-                              Featured
-                            </span>
-                          )}
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            campaign.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
-                          }`}>
-                            {campaign.active ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                        <p className="text-slate-400 text-sm">{campaign.title_fr}</p>
-                        <p className="text-slate-600 text-sm mt-1 line-clamp-1">{campaign.summary_en}</p>
-                        <div className="flex items-center space-x-4 mt-2">
-                          <span className="text-teal-600 font-mono text-sm font-bold">
-                            Goal: ${campaign.goal_amount?.toLocaleString()}
-                          </span>
-                          <span className="text-slate-400 text-xs">
-                            {campaign.amount_cards?.length || 0} donation tiers
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleOpenDialog(campaign)}
-                        >
+// Sortable Campaign Card Component
+function SortableCampaignCard({ campaign, index, totalCount, onEdit, onDelete, onReorder, onToggleFeatured }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: campaign.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  return (
+    <Card ref={setNodeRef} style={style} className="border-0 shadow-md overflow-hidden">
+      <div className="flex">
+        {/* Drag Handle & Reorder Controls */}
+        <div className="flex flex-col justify-center px-2 bg-slate-50 border-r">
+          <button
+            onClick={() => onReorder(index, 'up')}
+            disabled={index === 0}
+            className="p-1 hover:bg-slate-200 rounded disabled:opacity-30"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </button>
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-slate-200 rounded my-1"
+          >
+            <GripVertical className="w-4 h-4 text-slate-400" />
+          </button>
+          <button
+            onClick={() => onReorder(index, 'down')}
+            disabled={index === totalCount - 1}
+            className="p-1 hover:bg-slate-200 rounded disabled:opacity-30"
+          >
+            <ArrowDown className="w-4 h-4" />
+          </button>
+        </div>
+
+        {campaign.cover_image && (
+          <img 
+            src={campaign.cover_image} 
+            alt={campaign.title_en}
+            className="w-40 h-28 object-cover hidden sm:block"
+          />
+        )}
+        <CardContent className="flex-1 p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <h3 className="font-display text-lg font-semibold text-navy">
+                  {campaign.title_en}
+                </h3>
+                {campaign.featured && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 flex items-center">
+                    <Star className="w-3 h-3 mr-1" />
+                    Featured
+                  </span>
+                )}
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  campaign.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {campaign.active ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <p className="text-slate-400 text-sm">{campaign.title_fr}</p>
+              <p className="text-slate-600 text-sm mt-1 line-clamp-1">{campaign.summary_en}</p>
+              <div className="flex items-center space-x-4 mt-2">
+                <span className="text-teal-600 font-mono text-sm font-bold">
+                  Goal: ${campaign.goal_amount?.toLocaleString()}
+                </span>
+                <span className="text-slate-400 text-xs">
+                  {campaign.amount_cards?.length || 0} donation tiers
+                </span>
+                <span className="text-slate-400 text-xs">
+                  Order: {campaign.sort_order ?? index}
+                </span>
+              </div>
+            </div>
+            <div className="flex space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={onToggleFeatured}
+                className={campaign.featured ? 'text-yellow-500' : 'text-slate-400'}
+              >
+                <Star className="w-4 h-4" fill={campaign.featured ? 'currentColor' : 'none'} />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={onEdit}
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-red-500 border-red-200 hover:bg-red-50"
+                onClick={onDelete}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </div>
+    </Card>
+  );
+}
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button 
