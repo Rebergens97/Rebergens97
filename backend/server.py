@@ -716,6 +716,7 @@ async def seed_database():
     await db.users.insert_one(owner_doc)
     
     # Create campaigns with exact impact texts from requirements
+    # Campaign 1: Sickle Cell (Featured)
     sickle_cell_campaign = Campaign(
         slug="sickle-cell",
         title_en="Sickle Cell Disease Support",
@@ -741,6 +742,8 @@ Notre mission est de fournir un soutien complet comprenant :
 
 Chaque don nous aide à atteindre plus de familles et à leur fournir les soins dont elles ont désespérément besoin.""",
         goal_amount=50000,
+        featured=True,
+        sort_order=0,
         cover_image="https://images.pexels.com/photos/7465698/pexels-photo-7465698.jpeg",
         amount_cards=[
             AmountCard(amount=25, impact_en="Helps fund a screening test and patient guidance.", impact_fr="Contribue à financer un dépistage et l'orientation d'un patient."),
@@ -751,6 +754,7 @@ Chaque don nous aide à atteindre plus de familles et à leur fournir les soins 
         ]
     )
     
+    # Campaign 2: Pregnancy & Testing (Featured)
     pregnancy_campaign = Campaign(
         slug="pregnancy-testing",
         title_en="Pregnancy & Genetic Testing",
@@ -776,6 +780,8 @@ Early detection and proper care can prevent serious complications and save lives
 
 La détection précoce et les soins appropriés peuvent prévenir des complications graves et sauver des vies. Votre don rend cela possible pour les familles qui ne peuvent pas se permettre ces tests essentiels.""",
         goal_amount=35000,
+        featured=True,
+        sort_order=1,
         cover_image="https://images.pexels.com/photos/9441512/pexels-photo-9441512.jpeg",
         amount_cards=[
             AmountCard(amount=25, impact_en="Helps fund blood type & Rh testing for an expecting mother.", impact_fr="Contribue au test de groupe sanguin & Rhésus pour une future maman."),
@@ -786,32 +792,177 @@ La détection précoce et les soins appropriés peuvent prévenir des complicati
         ]
     )
     
-    for campaign in [sickle_cell_campaign, pregnancy_campaign]:
+    # Campaign 3: Newborn Screening
+    newborn_campaign = Campaign(
+        slug="newborn-screening",
+        title_en="Newborn Screening (Early Diagnosis)",
+        title_fr="Dépistage du Nouveau-né (Diagnostic Précoce)",
+        summary_en="Early detection saves lives. Help us screen newborns for sickle cell disease within their first days of life.",
+        summary_fr="La détection précoce sauve des vies. Aidez-nous à dépister les nouveau-nés pour la drépanocytose dès leurs premiers jours.",
+        body_en="""Newborn screening is critical for identifying sickle cell disease before symptoms appear. Early diagnosis allows for preventive care that can dramatically improve outcomes and quality of life.
+
+Our newborn screening program provides:
+- Heel prick blood tests for all newborns at partner facilities
+- Rapid result processing and family notification
+- Immediate enrollment in care programs for positive cases
+- Parent education and support resources
+
+With your help, we can ensure every baby has the chance for early intervention.""",
+        body_fr="""Le dépistage néonatal est essentiel pour identifier la drépanocytose avant l'apparition des symptômes. Un diagnostic précoce permet des soins préventifs qui peuvent considérablement améliorer les résultats et la qualité de vie.
+
+Notre programme de dépistage néonatal fournit :
+- Tests sanguins au talon pour tous les nouveau-nés dans les établissements partenaires
+- Traitement rapide des résultats et notification des familles
+- Inscription immédiate aux programmes de soins pour les cas positifs
+- Ressources d'éducation et de soutien aux parents
+
+Avec votre aide, nous pouvons garantir à chaque bébé la chance d'une intervention précoce.""",
+        goal_amount=25000,
+        featured=False,
+        sort_order=2,
+        cover_image="https://images.pexels.com/photos/3845126/pexels-photo-3845126.jpeg",
+        amount_cards=[
+            AmountCard(amount=25, impact_en="Helps fund one newborn screening test.", impact_fr="Aide à financer un test de dépistage néonatal."),
+            AmountCard(amount=50, impact_en="Supports testing and family counseling for one newborn.", impact_fr="Soutient le dépistage et le conseil familial pour un nouveau-né."),
+            AmountCard(amount=100, impact_en="Helps cover testing supplies for a day at a partner clinic.", impact_fr="Aide à couvrir les fournitures de test pour une journée dans une clinique partenaire."),
+            AmountCard(amount=250, impact_en="Contributes to training healthcare workers in screening.", impact_fr="Contribue à la formation des agents de santé au dépistage."),
+            AmountCard(amount=500, impact_en="Helps establish screening at a new partner facility.", impact_fr="Aide à établir le dépistage dans un nouvel établissement partenaire.")
+        ]
+    )
+    
+    # Campaign 4: Emergency Relief Fund
+    emergency_campaign = Campaign(
+        slug="emergency-relief",
+        title_en="Emergency Relief Fund (Crisis Support)",
+        title_fr="Fonds d'Urgence (Soutien en Crise)",
+        summary_en="Provide immediate assistance to patients facing sickle cell crises who need urgent medical care.",
+        summary_fr="Fournir une aide immédiate aux patients confrontés à des crises drépanocytaires nécessitant des soins médicaux urgents.",
+        body_en="""Sickle cell crises can strike without warning, causing extreme pain and requiring immediate medical attention. Many families cannot afford emergency care when it's needed most.
+
+Our Emergency Relief Fund provides:
+- Rapid financial assistance for crisis hospitalizations
+- Coverage for emergency medications and treatments
+- Support for transportation to medical facilities
+- Post-crisis follow-up care coordination
+
+Your donation ensures no one faces a sickle cell crisis alone.""",
+        body_fr="""Les crises drépanocytaires peuvent survenir sans prévenir, causant des douleurs extrêmes et nécessitant une attention médicale immédiate. De nombreuses familles ne peuvent pas se permettre les soins d'urgence quand ils sont le plus nécessaires.
+
+Notre Fonds d'Urgence fournit :
+- Aide financière rapide pour les hospitalisations de crise
+- Couverture des médicaments et traitements d'urgence
+- Soutien pour le transport vers les établissements médicaux
+- Coordination des soins de suivi post-crise
+
+Votre don garantit que personne ne fait face seul à une crise drépanocytaire.""",
+        goal_amount=40000,
+        featured=False,
+        sort_order=3,
+        cover_image="https://images.pexels.com/photos/263402/pexels-photo-263402.jpeg",
+        amount_cards=[
+            AmountCard(amount=25, impact_en="Helps cover emergency medication costs.", impact_fr="Aide à couvrir les coûts des médicaments d'urgence."),
+            AmountCard(amount=50, impact_en="Supports emergency transportation to a medical facility.", impact_fr="Soutient le transport d'urgence vers un établissement médical."),
+            AmountCard(amount=100, impact_en="Helps fund one day of crisis care hospitalization.", impact_fr="Aide à financer une journée d'hospitalisation en soins de crise."),
+            AmountCard(amount=250, impact_en="Contributes to comprehensive crisis intervention.", impact_fr="Contribue à une intervention de crise complète."),
+            AmountCard(amount=500, impact_en="Helps cover a full emergency hospitalization episode.", impact_fr="Aide à couvrir un épisode complet d'hospitalisation d'urgence.")
+        ]
+    )
+    
+    # Campaign 5: Medication Access
+    medication_campaign = Campaign(
+        slug="medication-access",
+        title_en="Medication Access",
+        title_fr="Accès aux Médicaments",
+        summary_en="Ensure patients have consistent access to life-saving medications like hydroxyurea and pain management.",
+        summary_fr="Garantir aux patients un accès constant aux médicaments vitaux comme l'hydroxyurée et la gestion de la douleur.",
+        body_en="""Many sickle cell patients struggle to afford the medications they need to manage their condition and prevent crises. Consistent medication access is key to improving quality of life.
+
+Our Medication Access program provides:
+- Hydroxyurea and other disease-modifying medications
+- Pain management medications during crises
+- Folic acid and nutritional supplements
+- Medication delivery to remote areas
+
+Help us ensure no patient goes without essential medications.""",
+        body_fr="""De nombreux patients drépanocytaires ont du mal à se procurer les médicaments dont ils ont besoin pour gérer leur condition et prévenir les crises. Un accès constant aux médicaments est essentiel pour améliorer la qualité de vie.
+
+Notre programme d'Accès aux Médicaments fournit :
+- Hydroxyurée et autres médicaments modificateurs de la maladie
+- Médicaments de gestion de la douleur pendant les crises
+- Acide folique et suppléments nutritionnels
+- Livraison de médicaments dans les zones reculées
+
+Aidez-nous à garantir qu'aucun patient ne soit privé de médicaments essentiels.""",
+        goal_amount=30000,
+        featured=False,
+        sort_order=4,
+        cover_image="https://images.pexels.com/photos/3683098/pexels-photo-3683098.jpeg",
+        amount_cards=[
+            AmountCard(amount=25, impact_en="Helps provide one month of folic acid supplements.", impact_fr="Aide à fournir un mois de suppléments d'acide folique."),
+            AmountCard(amount=50, impact_en="Supports pain management medication for one crisis.", impact_fr="Soutient les médicaments de gestion de la douleur pour une crise."),
+            AmountCard(amount=100, impact_en="Helps fund one month of hydroxyurea treatment.", impact_fr="Aide à financer un mois de traitement à l'hydroxyurée."),
+            AmountCard(amount=250, impact_en="Contributes to a 3-month medication supply for one patient.", impact_fr="Contribue à un approvisionnement de 3 mois en médicaments pour un patient."),
+            AmountCard(amount=500, impact_en="Helps establish medication access for multiple patients.", impact_fr="Aide à établir l'accès aux médicaments pour plusieurs patients.")
+        ]
+    )
+    
+    # Campaign 6: Patient Education & Community Awareness
+    education_campaign = Campaign(
+        slug="patient-education",
+        title_en="Patient Education & Community Awareness",
+        title_fr="Éducation des Patients & Sensibilisation",
+        summary_en="Empower communities with knowledge about sickle cell disease, prevention, and care through education programs.",
+        summary_fr="Donner aux communautés les connaissances sur la drépanocytose, la prévention et les soins grâce à des programmes d'éducation.",
+        body_en="""Knowledge is power in the fight against sickle cell disease. Our education programs help patients, families, and communities understand the condition and take proactive steps.
+
+Our education initiatives include:
+- Patient self-care workshops
+- Family caregiver training
+- School awareness programs
+- Community health fairs and screenings
+- Printed and digital educational materials
+
+Help us spread awareness and empower communities.""",
+        body_fr="""La connaissance est un pouvoir dans la lutte contre la drépanocytose. Nos programmes d'éducation aident les patients, les familles et les communautés à comprendre la condition et à prendre des mesures proactives.
+
+Nos initiatives éducatives comprennent :
+- Ateliers d'auto-soins pour les patients
+- Formation des aidants familiaux
+- Programmes de sensibilisation scolaire
+- Foires de santé communautaires et dépistages
+- Matériels éducatifs imprimés et numériques
+
+Aidez-nous à sensibiliser et à autonomiser les communautés.""",
+        goal_amount=20000,
+        featured=False,
+        sort_order=5,
+        cover_image="https://images.pexels.com/photos/6129494/pexels-photo-6129494.jpeg",
+        amount_cards=[
+            AmountCard(amount=25, impact_en="Helps print educational materials for one community event.", impact_fr="Aide à imprimer des matériels éducatifs pour un événement communautaire."),
+            AmountCard(amount=50, impact_en="Supports one patient self-care workshop session.", impact_fr="Soutient une session d'atelier d'auto-soins pour patients."),
+            AmountCard(amount=100, impact_en="Helps fund a school awareness presentation.", impact_fr="Aide à financer une présentation de sensibilisation scolaire."),
+            AmountCard(amount=250, impact_en="Contributes to a community health fair.", impact_fr="Contribue à une foire de santé communautaire."),
+            AmountCard(amount=500, impact_en="Helps organize a regional education campaign.", impact_fr="Aide à organiser une campagne d'éducation régionale.")
+        ]
+    )
+    
+    for campaign in [sickle_cell_campaign, pregnancy_campaign, newborn_campaign, emergency_campaign, medication_campaign, education_campaign]:
         doc = campaign.model_dump()
         doc['created_at'] = doc['created_at'].isoformat()
         doc['updated_at'] = doc['updated_at'].isoformat()
         await db.campaigns.insert_one(doc)
     
-    # Create sample reports
+    # Create sample reports (start with $0 spent for consistency)
     report1 = Report(
-        title_en="Q4 2024 Impact Report",
-        title_fr="Rapport d'Impact T4 2024",
-        description_en="In Q4 2024, we successfully screened 250 individuals for sickle cell disease and provided medical support to 45 families in need.",
-        description_fr="Au T4 2024, nous avons réussi à dépister 250 personnes pour la drépanocytose et fourni un soutien médical à 45 familles dans le besoin.",
-        amount_spent=12500,
-        campaign_id=sickle_cell_campaign.id
+        title_en="Foundation Launch Report",
+        title_fr="Rapport de Lancement de la Fondation",
+        description_en="DrepanHope Foundation has officially launched! We are setting up our programs and partnerships to begin serving communities affected by sickle cell disease.",
+        description_fr="DrepanHope Foundation est officiellement lancée ! Nous mettons en place nos programmes et partenariats pour commencer à servir les communautés touchées par la drépanocytose.",
+        amount_spent=0,
+        campaign_id=None
     )
     
-    report2 = Report(
-        title_en="Prenatal Testing Program Launch",
-        title_fr="Lancement du Programme de Dépistage Prénatal",
-        description_en="We launched our prenatal testing program, providing free blood type and genetic screening to 100 expecting mothers.",
-        description_fr="Nous avons lancé notre programme de dépistage prénatal, offrant des tests de groupe sanguin et un dépistage génétique gratuits à 100 futures mamans.",
-        amount_spent=8750,
-        campaign_id=pregnancy_campaign.id
-    )
-    
-    for report in [report1, report2]:
+    for report in [report1]:
         doc = report.model_dump()
         doc['date'] = doc['date'].isoformat()
         doc['created_at'] = doc['created_at'].isoformat()
@@ -819,23 +970,15 @@ La détection précoce et les soins appropriés peuvent prévenir des complicati
     
     # Create sample updates
     update1 = Update(
-        title_en="New Partnership with Local Clinics",
-        title_fr="Nouveau Partenariat avec des Cliniques Locales",
-        body_en="We are excited to announce new partnerships with 5 local clinics, expanding our reach to more communities in need.",
-        body_fr="Nous sommes ravis d'annoncer de nouveaux partenariats avec 5 cliniques locales, élargissant notre portée à plus de communautés dans le besoin.",
-        campaign_id=sickle_cell_campaign.id,
+        title_en="Welcome to DrepanHope Foundation",
+        title_fr="Bienvenue à DrepanHope Foundation",
+        body_en="We are thrilled to launch DrepanHope Foundation, dedicated to fighting sickle cell disease through screening, treatment support, and community education. Together, we can make a difference.",
+        body_fr="Nous sommes ravis de lancer DrepanHope Foundation, dédiée à la lutte contre la drépanocytose par le dépistage, le soutien au traitement et l'éducation communautaire. Ensemble, nous pouvons faire la différence.",
+        campaign_id=None,
         images=["https://images.pexels.com/photos/6129494/pexels-photo-6129494.jpeg"]
     )
     
-    update2 = Update(
-        title_en="Success Story: Maria's Journey",
-        title_fr="Témoignage: Le Parcours de Maria",
-        body_en="Thanks to early screening and support from DrepanHope, Maria was able to receive proper prenatal care and gave birth to a healthy baby.",
-        body_fr="Grâce au dépistage précoce et au soutien de DrepanHope, Maria a pu recevoir des soins prénatals appropriés et a donné naissance à un bébé en bonne santé.",
-        campaign_id=pregnancy_campaign.id
-    )
-    
-    for update in [update1, update2]:
+    for update in [update1]:
         doc = update.model_dump()
         doc['date'] = doc['date'].isoformat()
         doc['created_at'] = doc['created_at'].isoformat()
