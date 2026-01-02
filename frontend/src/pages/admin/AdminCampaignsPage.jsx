@@ -249,6 +249,43 @@ export default function AdminCampaignsPage() {
     }
   };
 
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = campaigns.findIndex(c => c.id === active.id);
+    const newIndex = campaigns.findIndex(c => c.id === over.id);
+    
+    const newCampaigns = arrayMove(campaigns, oldIndex, newIndex);
+    setCampaigns(newCampaigns);
+    
+    const campaignIds = newCampaigns.map(c => c.id);
+    
+    try {
+      await axios.put(`${API}/admin/campaigns/reorder`, campaignIds);
+      toast.success('Order updated');
+    } catch (error) {
+      console.error('Failed to reorder:', error);
+      toast.error('Failed to reorder');
+      fetchCampaigns(); // Revert on error
+    }
+  };
+
+  const toggleFeatured = async (campaign) => {
+    try {
+      await axios.put(`${API}/admin/campaigns/${campaign.id}`, {
+        ...campaign,
+        featured: !campaign.featured
+      });
+      fetchCampaigns();
+      toast.success(campaign.featured ? 'Removed from featured' : 'Added to featured');
+    } catch (error) {
+      console.error('Failed to toggle featured:', error);
+      toast.error('Failed to update');
+    }
+  };
+
   const updateAmountCard = (index, field, value) => {
     const newCards = [...formData.amount_cards];
     newCards[index] = { ...newCards[index], [field]: field === 'amount' ? parseInt(value) || 0 : value };
