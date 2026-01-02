@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Toaster } from '../ui/sonner';
 import { 
   Heart, LayoutDashboard, Target, DollarSign, FileText, 
-  Bell, Users, Settings, LogOut, Menu, ChevronRight 
+  Bell, Users, Settings, LogOut, Menu, ChevronRight, BookOpen 
 } from 'lucide-react';
 
 export const AdminLayout = ({ children }) => {
@@ -18,6 +18,7 @@ export const AdminLayout = ({ children }) => {
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['owner', 'admin', 'editor', 'viewer'] },
     { href: '/admin/campaigns', icon: Target, label: 'Campaigns', roles: ['owner', 'admin'] },
     { href: '/admin/donations', icon: DollarSign, label: 'Donations', roles: ['owner', 'admin'] },
+    { href: '/admin/posts', icon: BookOpen, label: 'Blog Posts', roles: ['owner', 'admin', 'editor'] },
     { href: '/admin/reports', icon: FileText, label: 'Reports', roles: ['owner', 'admin', 'editor'] },
     { href: '/admin/updates', icon: Bell, label: 'Updates', roles: ['owner', 'admin', 'editor'] },
     { href: '/admin/users', icon: Users, label: 'Users', roles: ['owner'] },
