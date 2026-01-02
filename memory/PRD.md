@@ -48,6 +48,7 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 - ✅ Custom donation impact texts (EN/FR) per campaign
 - ✅ Donations management with status change and CSV export
 - ✅ **Blog Posts management** - /admin/posts with CRUD, draft/published toggle
+- ✅ **Image Upload** - Cloudinary integration with drag/drop, preview, URL fallback
 - ✅ Transparency reports management
 - ✅ News updates management
 - ✅ User management (Owner only)
