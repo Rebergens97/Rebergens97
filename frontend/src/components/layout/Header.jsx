@@ -13,6 +13,7 @@ export const Header = () => {
   const navLinks = [
     { href: '/', label: t('nav.home') },
     { href: '/campaigns', label: t('nav.campaigns') },
+    { href: '/blog', label: t('nav.blog') },
     { href: '/transparency', label: t('nav.transparency') },
     { href: '/faq', label: t('nav.faq') },
     { href: '/contact', label: t('nav.contact') },
