@@ -4,6 +4,7 @@ export const translations = {
     nav: {
       home: "Home",
       campaigns: "Campaigns",
+      blog: "Blog",
       transparency: "Transparency",
       faq: "FAQ",
       contact: "Contact",
