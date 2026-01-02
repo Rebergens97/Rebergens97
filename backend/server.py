@@ -709,6 +709,61 @@ async def admin_get_audit_logs(user: dict = Depends(require_roles([UserRole.OWNE
     logs = await db.audit_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(500)
     return logs
 
+# ==================== DEV ENDPOINTS ====================
+
+@api_router.post("/dev/reset-owner")
+async def dev_reset_owner():
+    """
+    Development-only endpoint to reset the owner password to a known temporary value.
+    WARNING: This endpoint should be disabled in production.
+    """
+    temp_password = "Temp@12345!"
+    
+    # Find the owner user
+    owner = await db.users.find_one({"email": "admin@drepanhope.org"})
+    
+    if not owner:
+        # Create owner if doesn't exist
+        owner_user = User(
+            name="Admin",
+            email="admin@drepanhope.org",
+            role=UserRole.OWNER,
+            password_hash=hash_password(temp_password),
+            status="active",
+            force_password_change=True
+        )
+        doc = owner_user.model_dump()
+        doc['created_at'] = doc['created_at'].isoformat()
+        await db.users.insert_one(doc)
+        logger.info("Created new owner user with temporary password")
+        return {
+            "success": True,
+            "message": "Owner user created",
+            "email": "admin@drepanhope.org",
+            "temporary_password": temp_password,
+            "must_change_password": True
+        }
+    
+    # Update existing owner with new password hash and set force_password_change
+    new_hash = hash_password(temp_password)
+    await db.users.update_one(
+        {"email": "admin@drepanhope.org"},
+        {"$set": {
+            "password_hash": new_hash,
+            "status": "active",
+            "force_password_change": True
+        }}
+    )
+    logger.info(f"Reset owner password for admin@drepanhope.org")
+    
+    return {
+        "success": True,
+        "message": "Owner password reset",
+        "email": "admin@drepanhope.org",
+        "temporary_password": temp_password,
+        "must_change_password": True
+    }
+
 # ==================== SEED DATA ====================
 
 @api_router.post("/seed")
