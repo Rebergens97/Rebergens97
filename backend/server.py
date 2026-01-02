@@ -88,8 +88,10 @@ class Campaign(BaseModel):
     body_fr: str
     goal_amount: float = 0
     active: bool = True
+    featured: bool = False
     cover_image: str = ""
     amount_cards: List[AmountCard] = []
+    sort_order: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -103,8 +105,10 @@ class CampaignCreate(BaseModel):
     body_fr: str
     goal_amount: float = 0
     active: bool = True
+    featured: bool = False
     cover_image: str = ""
     amount_cards: List[AmountCard] = []
+    sort_order: int = 0
 
 class Donation(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -266,9 +270,13 @@ async def root():
     return {"message": "DrepanHope Foundation API", "status": "running"}
 
 @api_router.get("/campaigns", response_model=List[Campaign])
-async def get_campaigns(active_only: bool = True):
-    query = {"active": True} if active_only else {}
-    campaigns = await db.campaigns.find(query, {"_id": 0}).to_list(100)
+async def get_campaigns(active_only: bool = True, featured_only: bool = False):
+    query = {}
+    if active_only:
+        query["active"] = True
+    if featured_only:
+        query["featured"] = True
+    campaigns = await db.campaigns.find(query, {"_id": 0}).sort("sort_order", 1).to_list(100)
     return campaigns
 
 @api_router.get("/campaigns/{slug}")
@@ -448,8 +456,15 @@ async def get_admin_stats(user: dict = Depends(require_roles([UserRole.OWNER, Us
 # Campaigns Management
 @api_router.get("/admin/campaigns")
 async def admin_get_campaigns(user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN]))):
-    campaigns = await db.campaigns.find({}, {"_id": 0}).to_list(100)
+    campaigns = await db.campaigns.find({}, {"_id": 0}).sort("sort_order", 1).to_list(100)
     return campaigns
+
+@api_router.put("/admin/campaigns/reorder")
+async def admin_reorder_campaigns(campaign_ids: List[str], user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN]))):
+    for index, campaign_id in enumerate(campaign_ids):
+        await db.campaigns.update_one({"id": campaign_id}, {"$set": {"sort_order": index}})
+    await create_audit_log(user["id"], "reorder", "campaigns", "bulk")
+    return {"success": True}
 
 @api_router.post("/admin/campaigns")
 async def admin_create_campaign(data: CampaignCreate, user: dict = Depends(require_roles([UserRole.OWNER, UserRole.ADMIN]))):
