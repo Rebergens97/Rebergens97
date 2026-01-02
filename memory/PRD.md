@@ -16,7 +16,6 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 ## Core Requirements (Static)
 - Deep navy + teal + coral color palette
 - Mobile-first responsive design
-- Placeholder payment (save as pending, manual confirmation)
 - JWT authentication with role-based access control
 - MongoDB database with audit logging
 
@@ -28,10 +27,11 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 - ✅ All 6 campaigns: 2 featured + 4 additional programs
 - ✅ Donate page with campaign dropdown selector for all 6 campaigns
 - ✅ Campaign-specific impact text per donation amount
+- ✅ **Stripe Checkout Integration** - Live payment processing
 - ✅ Transparency page with $0/$0 consistent counters (fresh start)
 - ✅ FAQ page with accordion (8 questions EN/FR)
 - ✅ Contact page with form, email, WhatsApp
-- ✅ Thank You page with next steps
+- ✅ Thank You page with payment status polling from Stripe
 - ✅ Dynamic footer year
 - ✅ **Blog** - /blog page with post listing, tags, search
 - ✅ **Single Post** - /blog/:slug with full content, share, related posts
@@ -40,10 +40,12 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 
 ### Admin Panel
 - ✅ JWT authentication with password change on first login
-- ✅ Dev endpoint to reset owner password (POST /api/dev/reset-owner)
+- ✅ **Dev Mode Toggle** - Dev tools only visible when DEV_MODE=true
+- ✅ Dev endpoint to reset owner password (POST /api/dev/reset-owner) - disabled in production
 - ✅ Force password change enforcement on all protected routes
 - ✅ Clear login error messages (User not found / Wrong password / User disabled)
 - ✅ Dashboard with donation stats
+- ✅ **Campaign Ordering** - Drag-and-drop reordering with dnd-kit
 - ✅ Campaigns management with featured flag and reordering
 - ✅ Custom donation impact texts (EN/FR) per campaign
 - ✅ Donations management with status change and CSV export
@@ -54,6 +56,14 @@ Build a modern donation website for DrepanHope Foundation (USA-based, global mis
 - ✅ User management (Owner only)
 - ✅ Settings management (Owner only)
 - ✅ Audit logging for all changes
+
+### Payment Integration
+- ✅ **Stripe Checkout** - Test mode enabled
+- ✅ One-time and monthly donations supported
+- ✅ POST /api/donations/checkout - Creates Stripe session
+- ✅ GET /api/donations/status/:session_id - Polls payment status
+- ✅ POST /api/webhooks/stripe - Webhook handler for payment confirmation
+- ✅ Fallback to mock mode if Stripe not configured
 
 ### Campaigns Seeded
 1. Sickle Cell Disease Support (Featured)
