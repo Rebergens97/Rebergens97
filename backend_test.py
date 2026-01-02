@@ -15,7 +15,7 @@ class DrepanHopeAPITester:
         self.failed_tests = []
         self.admin_credentials = {
             "email": "admin@drepanhope.org",
-            "password": "YVoWQKo2IO0itgn8"
+            "password": "raQHZLukIQ88MNeV"
         }
 
     def log_test(self, name, success, details=""):
