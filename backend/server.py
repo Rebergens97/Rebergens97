@@ -1226,15 +1226,37 @@ async def admin_get_audit_logs(user: dict = Depends(require_roles([UserRole.OWNE
 
 # ==================== DEV ENDPOINTS ====================
 
+# Rate limiting storage (in-memory, simple implementation)
+_rate_limit_store = {}
+
+def check_rate_limit(ip: str, limit: int = 5, window: int = 60) -> bool:
+    """Check if IP has exceeded rate limit. Returns True if allowed, False if blocked."""
+    now = datetime.now(timezone.utc).timestamp()
+    key = f"dev_reset:{ip}"
+    
+    if key not in _rate_limit_store:
+        _rate_limit_store[key] = []
+    
+    # Clean old entries
+    _rate_limit_store[key] = [t for t in _rate_limit_store[key] if now - t < window]
+    
+    if len(_rate_limit_store[key]) >= limit:
+        return False
+    
+    _rate_limit_store[key].append(now)
+    return True
+
 @api_router.post("/dev/reset-owner")
 async def dev_reset_owner(request: Request):
     """
-    Development-only endpoint to reset the owner password to a known temporary value.
+    Development-only endpoint to reset the owner password.
     
     Security:
     - Disabled entirely in production (NODE_ENV=production)
     - Requires DEV_MODE=true
     - Requires x-dev-reset-token header matching DEV_RESET_TOKEN env var
+    - Rate limited to 5 requests per minute per IP
+    - Never returns password in response (must be known from env)
     """
     # Block in production - return 404 to not reveal endpoint exists
     if IS_PRODUCTION:
@@ -1244,10 +1266,20 @@ async def dev_reset_owner(request: Request):
     if not DEV_MODE:
         raise HTTPException(status_code=404, detail="Not found")
     
-    # Validate reset token
+    # Rate limiting
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(client_ip):
+        logger.warning(f"Rate limit exceeded for dev reset from {client_ip}")
+        raise HTTPException(status_code=429, detail="Too many requests. Try again later.")
+    
+    # Validate reset token - REQUIRED
     provided_token = request.headers.get("x-dev-reset-token", "")
-    if not DEV_RESET_TOKEN or provided_token != DEV_RESET_TOKEN:
-        logger.warning(f"Invalid dev reset token attempt from {request.client.host if request.client else 'unknown'}")
+    if not DEV_RESET_TOKEN:
+        logger.error("DEV_RESET_TOKEN not configured")
+        raise HTTPException(status_code=403, detail="Dev reset not configured")
+    
+    if provided_token != DEV_RESET_TOKEN:
+        logger.warning(f"Invalid dev reset token attempt from {client_ip}")
         raise HTTPException(status_code=403, detail="Invalid or missing dev reset token")
     
     temp_password = "Temp@12345!"
@@ -1269,32 +1301,23 @@ async def dev_reset_owner(request: Request):
         doc['created_at'] = doc['created_at'].isoformat()
         await db.users.insert_one(doc)
         logger.info("Created new owner user with temporary password")
-        return {
-            "success": True,
-            "message": "Owner user created",
-            "email": "admin@drepanhope.org",
-            "temporary_password": temp_password,
-            "must_change_password": True
-        }
+    else:
+        # Update existing owner with new password hash
+        new_hash = hash_password(temp_password)
+        await db.users.update_one(
+            {"email": "admin@drepanhope.org"},
+            {"$set": {
+                "password_hash": new_hash,
+                "status": "active",
+                "force_password_change": True
+            }}
+        )
+        logger.info(f"Reset owner password for admin@drepanhope.org")
     
-    # Update existing owner with new password hash and set force_password_change
-    new_hash = hash_password(temp_password)
-    await db.users.update_one(
-        {"email": "admin@drepanhope.org"},
-        {"$set": {
-            "password_hash": new_hash,
-            "status": "active",
-            "force_password_change": True
-        }}
-    )
-    logger.info(f"Reset owner password for admin@drepanhope.org")
-    
+    # NEVER return the password - only success status
     return {
         "success": True,
-        "message": "Owner password reset",
-        "email": "admin@drepanhope.org",
-        "temporary_password": temp_password,
-        "must_change_password": True
+        "message": "Owner password has been reset. Use the password from DEV_RESET_TOKEN configuration."
     }
 
 # ==================== SEED DATA ====================
