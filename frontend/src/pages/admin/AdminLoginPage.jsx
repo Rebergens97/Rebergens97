@@ -8,9 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { toast } from 'sonner';
 import { Heart, Loader2, Lock, Mail, RefreshCw, Bug } from 'lucide-react';
 import axios from 'axios';
+import { Helmet } from 'react-helmet';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${API_URL}/api`;
+
+// Security: Only enable dev tools if explicitly enabled AND not in production
+const DEV_TOOLS_ENABLED = process.env.REACT_APP_DEV_TOOLS_ENABLED === 'true' && process.env.NODE_ENV !== 'production';
+const DEV_RESET_TOKEN = process.env.REACT_APP_DEV_RESET_TOKEN || '';
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -19,27 +24,39 @@ export default function AdminLoginPage() {
   const [resetting, setResetting] = useState(false);
   const [email, setEmail] = useState('admin@drepanhope.org');
   const [password, setPassword] = useState('');
-  const [devMode, setDevMode] = useState(false);
+  const [showDevTools, setShowDevTools] = useState(false);
   
   // Debug state
   const [debugInfo, setDebugInfo] = useState(null);
   const [resetResult, setResetResult] = useState(null);
 
-  // Check if dev mode is enabled
+  // Check if dev tools should be shown
   useEffect(() => {
-    const checkDevMode = async () => {
+    const checkDevTools = async () => {
+      // First check client-side flag
+      if (!DEV_TOOLS_ENABLED) {
+        setShowDevTools(false);
+        return;
+      }
+      
+      // Then verify with backend
       try {
         const response = await axios.get(`${API}/config`);
-        setDevMode(response.data.dev_mode === true);
+        // Only show if both backend and frontend allow it
+        setShowDevTools(response.data.dev_tools_available === true && DEV_TOOLS_ENABLED);
       } catch (error) {
-        console.log('Config check failed, assuming production mode');
-        setDevMode(false);
+        setShowDevTools(false);
       }
     };
-    checkDevMode();
+    checkDevTools();
   }, []);
 
   const handleResetOwner = async () => {
+    if (!showDevTools || !DEV_RESET_TOKEN) {
+      toast.error('Dev tools not available');
+      return;
+    }
+    
     setResetting(true);
     setResetResult(null);
     setDebugInfo(null);
@@ -47,7 +64,11 @@ export default function AdminLoginPage() {
     const resetUrl = `${API}/dev/reset-owner`;
     
     try {
-      const response = await axios.post(resetUrl);
+      const response = await axios.post(resetUrl, {}, {
+        headers: {
+          'x-dev-reset-token': DEV_RESET_TOKEN
+        }
+      });
       setResetResult({
         success: true,
         data: response.data,
@@ -62,7 +83,7 @@ export default function AdminLoginPage() {
         url: resetUrl,
         status: error.response?.status
       });
-      toast.error(`Reset failed: ${error.response?.data?.detail || error.message}`);
+      toast.error(error.response?.data?.detail || 'Reset failed');
     } finally {
       setResetting(false);
     }
@@ -74,11 +95,9 @@ export default function AdminLoginPage() {
     setDebugInfo(null);
 
     const loginUrl = `${API}/auth/login`;
-    console.log('[DEBUG] Login attempt:', { url: loginUrl, email });
 
     try {
       const user = await login(email, password);
-      console.log('[DEBUG] Login success:', user);
       
       setDebugInfo({
         success: true,
@@ -90,14 +109,11 @@ export default function AdminLoginPage() {
       toast.success('Login successful');
       
       if (user.force_password_change) {
-        console.log('[DEBUG] Redirecting to change-password');
         navigate('/admin/change-password');
       } else {
-        console.log('[DEBUG] Redirecting to admin dashboard');
         navigate('/admin');
       }
     } catch (error) {
-      console.error('[DEBUG] Login error:', error);
       const errorDetail = error.response?.data?.detail || 'Invalid credentials';
       const debugData = error.response?.data?.debug || {};
       
@@ -116,158 +132,166 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-navy flex items-center justify-center p-4" data-testid="admin-login-page">
-      <Card className="w-full max-w-md border-0 shadow-2xl">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-teal-600 flex items-center justify-center">
-              <Heart className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <CardTitle className="font-display text-2xl text-navy">
-            Admin Login
-          </CardTitle>
-          <p className="text-slate-500 text-sm mt-1">
-            DrepanHope Foundation
-          </p>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {/* Dev Debug Panel - Only show in dev mode */}
-          {devMode && (
-            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-center gap-2 text-amber-700 text-xs font-medium mb-2">
-                <Bug className="w-4 h-4" />
-                DEV DEBUG MODE
+    <>
+      {/* SEO: Prevent admin pages from being indexed */}
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+        <title>Admin Login - DrepanHope Foundation</title>
+      </Helmet>
+      
+      <div className="min-h-screen bg-navy flex items-center justify-center p-4" data-testid="admin-login-page">
+        <Card className="w-full max-w-md border-0 shadow-2xl">
+          <CardHeader className="text-center pb-2">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-teal-600 flex items-center justify-center">
+                <Heart className="w-8 h-8 text-white" />
               </div>
-              <p className="text-xs text-amber-600 mb-2">
-                API: <code className="bg-amber-100 px-1 rounded">{API_URL}</code>
-              </p>
+            </div>
+            <CardTitle className="font-display text-2xl text-navy">
+              Admin Login
+            </CardTitle>
+            <p className="text-slate-500 text-sm mt-1">
+              DrepanHope Foundation
+            </p>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {/* Dev Debug Panel - Only shown in dev/preview with proper configuration */}
+            {showDevTools && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-700 text-xs font-medium mb-2">
+                  <Bug className="w-4 h-4" />
+                  DEV DEBUG MODE
+                </div>
+                <p className="text-xs text-amber-600 mb-2">
+                  API: <code className="bg-amber-100 px-1 rounded">{API_URL}</code>
+                </p>
+                <Button
+                  type="button"
+                  onClick={handleResetOwner}
+                  disabled={resetting}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-amber-700 border-amber-300 hover:bg-amber-100"
+                  data-testid="reset-owner-btn"
+                >
+                  {resetting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Resetting...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Reset Owner Password
+                    </>
+                  )}
+                </Button>
+                
+                {/* Reset Result */}
+                {resetResult && (
+                  <div className={`mt-2 p-2 rounded text-xs ${resetResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <p><strong>URL:</strong> {resetResult.url}</p>
+                    {resetResult.success ? (
+                      <>
+                        <p><strong>Email:</strong> {resetResult.data?.email}</p>
+                        <p><strong>Temp Password:</strong> {resetResult.data?.temporary_password}</p>
+                        <p><strong>Must Change:</strong> {String(resetResult.data?.must_change_password)}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p><strong>Status:</strong> {resetResult.status}</p>
+                        <p><strong>Error:</strong> {JSON.stringify(resetResult.error)}</p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                  Email
+                </Label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-12 rounded-xl"
+                    placeholder="admin@drepanhope.org"
+                    required
+                    data-testid="admin-email"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+                  Password
+                </Label>
+                <div className="relative mt-1">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 h-12 rounded-xl"
+                    placeholder="••••••••"
+                    required
+                    data-testid="admin-password"
+                  />
+                </div>
+              </div>
+
               <Button
-                type="button"
-                onClick={handleResetOwner}
-                disabled={resetting}
-                variant="outline"
-                size="sm"
-                className="w-full text-amber-700 border-amber-300 hover:bg-amber-100"
-              data-testid="reset-owner-btn"
-            >
-              {resetting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Resetting...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Reset Owner Password
-                </>
-              )}
-            </Button>
-            
-            {/* Reset Result */}
-            {resetResult && (
-              <div className={`mt-2 p-2 rounded text-xs ${resetResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                <p><strong>URL:</strong> {resetResult.url}</p>
-                {resetResult.success ? (
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 rounded-full bg-teal-600 hover:bg-teal-700 text-white font-semibold mt-6"
+                data-testid="admin-login-btn"
+              >
+                {loading ? (
                   <>
-                    <p><strong>Email:</strong> {resetResult.data?.email}</p>
-                    <p><strong>Temp Password:</strong> {resetResult.data?.temporary_password}</p>
-                    <p><strong>Must Change:</strong> {String(resetResult.data?.must_change_password)}</p>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+            </form>
+
+            {/* Login Debug Result - Only in dev mode */}
+            {showDevTools && debugInfo && (
+              <div className={`mt-4 p-3 rounded text-xs ${debugInfo.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                <p className="font-medium mb-1">Login Debug Info:</p>
+                <p><strong>URL:</strong> {debugInfo.url}</p>
+                {debugInfo.success ? (
+                  <>
+                    <p><strong>User:</strong> {debugInfo.user?.email} ({debugInfo.user?.role})</p>
+                    <p><strong>Force Change:</strong> {String(debugInfo.user?.force_password_change)}</p>
+                    <p><strong>Token:</strong> {debugInfo.token}</p>
                   </>
                 ) : (
                   <>
-                    <p><strong>Status:</strong> {resetResult.status}</p>
-                    <p><strong>Error:</strong> {JSON.stringify(resetResult.error)}</p>
+                    <p><strong>Status:</strong> {debugInfo.status}</p>
+                    <p><strong>Error:</strong> {debugInfo.error}</p>
+                    {debugInfo.debug && Object.keys(debugInfo.debug).length > 0 && (
+                      <>
+                        <p><strong>User Found:</strong> {String(debugInfo.debug.userFound)}</p>
+                        <p><strong>Password Match:</strong> {String(debugInfo.debug.passwordMatch)}</p>
+                      </>
+                    )}
                   </>
                 )}
               </div>
             )}
-          </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email" className="text-sm font-medium text-slate-700">
-                Email
-              </Label>
-              <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12 rounded-xl"
-                  placeholder="admin@drepanhope.org"
-                  required
-                  data-testid="admin-email"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="password" className="text-sm font-medium text-slate-700">
-                Password
-              </Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-12 rounded-xl"
-                  placeholder="••••••••"
-                  required
-                  data-testid="admin-password"
-                />
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-12 rounded-full bg-teal-600 hover:bg-teal-700 text-white font-semibold mt-6"
-              data-testid="admin-login-btn"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </Button>
-          </form>
-
-          {/* Login Debug Result */}
-          {debugInfo && (
-            <div className={`mt-4 p-3 rounded text-xs ${debugInfo.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              <p className="font-medium mb-1">Login Debug Info:</p>
-              <p><strong>URL:</strong> {debugInfo.url}</p>
-              {debugInfo.success ? (
-                <>
-                  <p><strong>User:</strong> {debugInfo.user?.email} ({debugInfo.user?.role})</p>
-                  <p><strong>Force Change:</strong> {String(debugInfo.user?.force_password_change)}</p>
-                  <p><strong>Token:</strong> {debugInfo.token}</p>
-                </>
-              ) : (
-                <>
-                  <p><strong>Status:</strong> {debugInfo.status}</p>
-                  <p><strong>Error:</strong> {debugInfo.error}</p>
-                  {debugInfo.debug && Object.keys(debugInfo.debug).length > 0 && (
-                    <>
-                      <p><strong>User Found:</strong> {String(debugInfo.debug.userFound)}</p>
-                      <p><strong>Password Match:</strong> {String(debugInfo.debug.passwordMatch)}</p>
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }
