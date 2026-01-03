@@ -1227,13 +1227,28 @@ async def admin_get_audit_logs(user: dict = Depends(require_roles([UserRole.OWNE
 # ==================== DEV ENDPOINTS ====================
 
 @api_router.post("/dev/reset-owner")
-async def dev_reset_owner():
+async def dev_reset_owner(request: Request):
     """
     Development-only endpoint to reset the owner password to a known temporary value.
-    WARNING: This endpoint is disabled in production.
+    
+    Security:
+    - Disabled entirely in production (NODE_ENV=production)
+    - Requires DEV_MODE=true
+    - Requires x-dev-reset-token header matching DEV_RESET_TOKEN env var
     """
+    # Block in production - return 404 to not reveal endpoint exists
+    if IS_PRODUCTION:
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    # Block if DEV_MODE is not enabled
     if not DEV_MODE:
         raise HTTPException(status_code=404, detail="Not found")
+    
+    # Validate reset token
+    provided_token = request.headers.get("x-dev-reset-token", "")
+    if not DEV_RESET_TOKEN or provided_token != DEV_RESET_TOKEN:
+        logger.warning(f"Invalid dev reset token attempt from {request.client.host if request.client else 'unknown'}")
+        raise HTTPException(status_code=403, detail="Invalid or missing dev reset token")
     
     temp_password = "Temp@12345!"
     
