@@ -30,8 +30,15 @@ JWT_SECRET = os.environ.get('JWT_SECRET', secrets.token_hex(32))
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 
+# Environment detection
+NODE_ENV = os.environ.get('NODE_ENV', 'development')
+IS_PRODUCTION = NODE_ENV == 'production'
+
 # Dev Mode - disable dev tools in production
-DEV_MODE = os.environ.get('DEV_MODE', 'false').lower() == 'true'
+DEV_MODE = os.environ.get('DEV_MODE', 'false').lower() == 'true' and not IS_PRODUCTION
+
+# Dev Reset Token - required for dev endpoints even in preview
+DEV_RESET_TOKEN = os.environ.get('DEV_RESET_TOKEN', '')
 
 # Stripe Configuration
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
