@@ -147,5 +147,6 @@ export const AdminLayout = ({ children }) => {
 
       <Toaster position="top-right" />
     </div>
+    </>
   );
 };
