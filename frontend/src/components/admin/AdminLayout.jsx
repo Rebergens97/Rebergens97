@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
 import { Toaster } from '../ui/sonner';
+import { Helmet } from 'react-helmet';
 import { 
   Heart, LayoutDashboard, Target, DollarSign, FileText, 
   Bell, Users, Settings, LogOut, Menu, ChevronRight, BookOpen 
@@ -22,7 +23,7 @@ export const AdminLayout = ({ children }) => {
     { href: '/admin/reports', icon: FileText, label: 'Reports', roles: ['owner', 'admin', 'editor'] },
     { href: '/admin/updates', icon: Bell, label: 'Updates', roles: ['owner', 'admin', 'editor'] },
     { href: '/admin/users', icon: Users, label: 'Users', roles: ['owner'] },
-    { href: '/admin/settings', icon: Settings, label: 'Settings', roles: ['owner'] },
+    { href: '/admin/settings', icon: Settings, label: 'Settings', roles: ['owner', 'admin'] },
   ];
 
   const isActive = (href) => {
