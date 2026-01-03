@@ -1,0 +1,10 @@
+# robots.txt for DrepanHope Foundation
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/admin/
+Disallow: /api/dev/
+
+# Sitemap (if available)
+# Sitemap: https://drepanhope.org/sitemap.xml
