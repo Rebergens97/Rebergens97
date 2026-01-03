@@ -330,7 +330,9 @@ async def get_config():
     """Return public configuration for the frontend."""
     return {
         "dev_mode": DEV_MODE,
-        "stripe_enabled": STRIPE_ENABLED
+        "stripe_enabled": STRIPE_ENABLED,
+        "is_production": IS_PRODUCTION,
+        "dev_tools_available": DEV_MODE and not IS_PRODUCTION
     }
 
 @api_router.get("/campaigns", response_model=List[Campaign])
