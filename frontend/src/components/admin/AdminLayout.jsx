@@ -37,27 +37,34 @@ export const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-navy transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-6 border-b border-white/10">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center">
-                <Heart className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <span className="font-display font-semibold text-white">DrepanHope</span>
-                <p className="text-slate-400 text-xs">Admin Panel</p>
-              </div>
-            </Link>
-          </div>
+    <>
+      {/* SEO: Prevent admin pages from being indexed by search engines */}
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="googlebot" content="noindex, nofollow" />
+      </Helmet>
+      
+      <div className="min-h-screen bg-slate-50 flex">
+        {/* Sidebar */}
+        <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-navy transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          <div className="flex flex-col h-full">
+            {/* Logo */}
+            <div className="p-6 border-b border-white/10">
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <span className="font-display font-semibold text-white">DrepanHope</span>
+                  <p className="text-slate-400 text-xs">Admin Panel</p>
+                </div>
+              </Link>
+            </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {/* Navigation */}
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.filter(item => hasRole(item.roles)).map((item) => {
               const Icon = item.icon;
               return (
