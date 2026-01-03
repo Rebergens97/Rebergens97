@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/button';
@@ -6,106 +6,25 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { toast } from 'sonner';
-import { Heart, Loader2, Lock, Mail, RefreshCw, Bug } from 'lucide-react';
-import axios from 'axios';
+import { Heart, Loader2, Lock, Mail } from 'lucide-react';
 import { Helmet } from 'react-helmet';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${API_URL}/api`;
 
-// Security: Only enable dev tools if explicitly enabled AND not in production
-const DEV_TOOLS_ENABLED = process.env.REACT_APP_DEV_TOOLS_ENABLED === 'true' && process.env.NODE_ENV !== 'production';
-const DEV_RESET_TOKEN = process.env.REACT_APP_DEV_RESET_TOKEN || '';
-
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [resetting, setResetting] = useState(false);
-  const [email, setEmail] = useState('admin@drepanhope.org');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showDevTools, setShowDevTools] = useState(false);
-  
-  // Debug state
-  const [debugInfo, setDebugInfo] = useState(null);
-  const [resetResult, setResetResult] = useState(null);
-
-  // Check if dev tools should be shown
-  useEffect(() => {
-    const checkDevTools = async () => {
-      // First check client-side flag
-      if (!DEV_TOOLS_ENABLED) {
-        setShowDevTools(false);
-        return;
-      }
-      
-      // Then verify with backend
-      try {
-        const response = await axios.get(`${API}/config`);
-        // Only show if both backend and frontend allow it
-        setShowDevTools(response.data.dev_tools_available === true && DEV_TOOLS_ENABLED);
-      } catch (error) {
-        setShowDevTools(false);
-      }
-    };
-    checkDevTools();
-  }, []);
-
-  const handleResetOwner = async () => {
-    if (!showDevTools || !DEV_RESET_TOKEN) {
-      toast.error('Dev tools not available');
-      return;
-    }
-    
-    setResetting(true);
-    setResetResult(null);
-    setDebugInfo(null);
-    
-    const resetUrl = `${API}/dev/reset-owner`;
-    
-    try {
-      const response = await axios.post(resetUrl, {}, {
-        headers: {
-          'x-dev-reset-token': DEV_RESET_TOKEN
-        }
-      });
-      setResetResult({
-        success: true,
-        data: response.data,
-        url: resetUrl
-      });
-      setPassword(response.data.temporary_password || 'Temp@12345!');
-      toast.success(`Password reset! Use: ${response.data.temporary_password}`);
-    } catch (error) {
-      setResetResult({
-        success: false,
-        error: error.response?.data || error.message,
-        url: resetUrl,
-        status: error.response?.status
-      });
-      toast.error(error.response?.data?.detail || 'Reset failed');
-    } finally {
-      setResetting(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setDebugInfo(null);
-
-    const loginUrl = `${API}/auth/login`;
 
     try {
       const user = await login(email, password);
-      
-      setDebugInfo({
-        success: true,
-        url: loginUrl,
-        user: user,
-        token: 'stored in localStorage'
-      });
-      
       toast.success('Login successful');
       
       if (user.force_password_change) {
@@ -115,16 +34,6 @@ export default function AdminLoginPage() {
       }
     } catch (error) {
       const errorDetail = error.response?.data?.detail || 'Invalid credentials';
-      const debugData = error.response?.data?.debug || {};
-      
-      setDebugInfo({
-        success: false,
-        url: loginUrl,
-        status: error.response?.status,
-        error: errorDetail,
-        debug: debugData
-      });
-      
       toast.error(errorDetail);
     } finally {
       setLoading(false);
@@ -155,59 +64,6 @@ export default function AdminLoginPage() {
             </p>
           </CardHeader>
           <CardContent className="pt-6">
-            {/* Dev Debug Panel - Only shown in dev/preview with proper configuration */}
-            {showDevTools && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-center gap-2 text-amber-700 text-xs font-medium mb-2">
-                  <Bug className="w-4 h-4" />
-                  DEV DEBUG MODE
-                </div>
-                <p className="text-xs text-amber-600 mb-2">
-                  API: <code className="bg-amber-100 px-1 rounded">{API_URL}</code>
-                </p>
-                <Button
-                  type="button"
-                  onClick={handleResetOwner}
-                  disabled={resetting}
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-amber-700 border-amber-300 hover:bg-amber-100"
-                  data-testid="reset-owner-btn"
-                >
-                  {resetting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Resetting...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Reset Owner Password
-                    </>
-                  )}
-                </Button>
-                
-                {/* Reset Result */}
-                {resetResult && (
-                  <div className={`mt-2 p-2 rounded text-xs ${resetResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    <p><strong>URL:</strong> {resetResult.url}</p>
-                    {resetResult.success ? (
-                      <>
-                        <p><strong>Email:</strong> {resetResult.data?.email}</p>
-                        <p><strong>Temp Password:</strong> {resetResult.data?.temporary_password}</p>
-                        <p><strong>Must Change:</strong> {String(resetResult.data?.must_change_password)}</p>
-                      </>
-                    ) : (
-                      <>
-                        <p><strong>Status:</strong> {resetResult.status}</p>
-                        <p><strong>Error:</strong> {JSON.stringify(resetResult.error)}</p>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-slate-700">
@@ -221,7 +77,7 @@ export default function AdminLoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-12 rounded-xl"
-                    placeholder="admin@drepanhope.org"
+                    placeholder="Enter your email"
                     required
                     data-testid="admin-email"
                   />
@@ -263,32 +119,6 @@ export default function AdminLoginPage() {
                 )}
               </Button>
             </form>
-
-            {/* Login Debug Result - Only in dev mode */}
-            {showDevTools && debugInfo && (
-              <div className={`mt-4 p-3 rounded text-xs ${debugInfo.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                <p className="font-medium mb-1">Login Debug Info:</p>
-                <p><strong>URL:</strong> {debugInfo.url}</p>
-                {debugInfo.success ? (
-                  <>
-                    <p><strong>User:</strong> {debugInfo.user?.email} ({debugInfo.user?.role})</p>
-                    <p><strong>Force Change:</strong> {String(debugInfo.user?.force_password_change)}</p>
-                    <p><strong>Token:</strong> {debugInfo.token}</p>
-                  </>
-                ) : (
-                  <>
-                    <p><strong>Status:</strong> {debugInfo.status}</p>
-                    <p><strong>Error:</strong> {debugInfo.error}</p>
-                    {debugInfo.debug && Object.keys(debugInfo.debug).length > 0 && (
-                      <>
-                        <p><strong>User Found:</strong> {String(debugInfo.debug.userFound)}</p>
-                        <p><strong>Password Match:</strong> {String(debugInfo.debug.passwordMatch)}</p>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
